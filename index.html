@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.0</title>
+    <title>Jelajah Si Kecil - Beta v1.1</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -89,9 +89,18 @@
         .menu-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #B45309; }
         .menu-btn.secondary { background: #475569; box-shadow: 0 3px 0 #1e293b; }
         .menu-btn.daily { background: linear-gradient(135deg, #8B5CF6, #EC4899); box-shadow: 0 3px 0 #7C3AED; }
+        .menu-btn.daily.completed { background: #10B981; box-shadow: 0 3px 0 #059669; cursor: default; }
         .menu-btn.disabled { opacity: 0.5; pointer-events: none; }
         
         .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
+
+        /* RADAR CHART */
+        .radar-chart-container { position: relative; width: 200px; height: 200px; margin: 20px auto; }
+        .radar-label { position: absolute; font-size: 10px; font-weight: bold; color: white; text-transform: uppercase; }
+        .radar-label.top { top: -20px; left: 50%; transform: translateX(-50%); }
+        .radar-label.right { top: 50%; right: -30px; transform: translateY(-50%); }
+        .radar-label.bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
+        .radar-label.left { top: 50%; left: -30px; transform: translateY(-50%); }
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -109,10 +118,9 @@
         const MEMORY_EMOJIS = ["🐱", "🐶", "🦁", "🐸", "🐵", "🍎", "🍌", "🍇", "🍉", "🍓", "🚗", "🚀", "⚽", "🏀", "🍕", "🍔", "🍦", "🎈", "🎁", "⏰"];
         const CODE_EMOJIS = ["🍎", "🍌", "🍇", "🍉", "🍒", "🥝", "🍍", "🥥"];
         const CODE_VALS = ["A", "B", "C", "D", "1", "2", "3", "4"];
-        // Collection Items (12 Mainan)
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
 
-        // --- AUDIO ENGINE (Simple Synth) ---
+        // --- AUDIO ENGINE ---
         const playSound = (type) => {
             if (!window.AudioContext && !window.webkitAudioContext) return;
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -143,21 +151,22 @@
         };
 
         const App = () => {
-            const [screen, setScreen] = useState('menu'); // menu, game, result, dashboard, collection
+            const [screen, setScreen] = useState('menu'); 
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1');
+                const saved = localStorage.getItem('jelajah_beta_v1_1');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
-                    unlockedRewards: [], // Array of indices unlocked
+                    unlockedRewards: [], 
+                    dailyChallenge: { lastPlayed: null }, // Store Date String
                     stats: { maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0} },
                     maze: { level: 0, score: 0 }, block: { level: 0, score: 0 },
                     memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }
                 };
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    return { ...defaultData, ...parsed }; // Merge safe
+                    return { ...defaultData, ...parsed };
                 }
                 return defaultData;
             });
@@ -168,7 +177,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_1', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -182,7 +191,7 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            // Memory Phase Timer
+            // Memory Timer
             useEffect(() => {
                 if (activeGame === 'memory' && puzzle && puzzle.phase === 'memorize') {
                     const duration = puzzle.duration * 1000;
@@ -202,7 +211,7 @@
                 }
             }, [puzzle, activeGame]);
 
-            // --- HELPERS ---
+            // Helpers
             const rotateMatrix = (matrix) => {
                 const rows = matrix.length; const cols = matrix[0].length;
                 let newMatrix = Array.from({ length: cols }, () => Array(rows).fill(0));
@@ -210,83 +219,55 @@
                 return newMatrix;
             };
 
-            // --- GAME GENERATORS (MATURED LOGIC) ---
-            
+            const isDailyDone = () => {
+                const today = new Date().toDateString();
+                return userData.dailyChallenge.lastPlayed === today;
+            };
+
+            // --- GENERATORS ---
             const generateMaze = (customLevel = null) => {
                 const level = customLevel !== null ? customLevel : userData.maze.level;
-                // Scale difficulty
                 let gridSize = 3; let steps = 2; let optionCount = 2;
                 if (level >= 5) { gridSize = 3; steps = 3; optionCount = 3; }
                 if (level >= 10) { gridSize = 4; steps = 3; optionCount = 4; }
                 if (level >= 20) { gridSize = 4; steps = 4; optionCount = 4; }
                 if (level >= 30) { gridSize = 5; steps = 5; optionCount = 6; }
-
                 const totalCells = gridSize * gridSize;
                 const labels = "ABCDEFGHIJKLMNOPQRSTUVWXY".split("").slice(0, totalCells);
                 const startPos = Math.floor(Math.random() * totalCells);
-                
-                let currentPos = startPos;
-                let pathHistory = [startPos]; 
-                let arrowSequence = [];
-
-                // Smart Pathfinding: Avoid hitting walls and backtracking
+                let currentPos = startPos; let pathHistory = [startPos]; let arrowSequence = [];
                 for (let i = 0; i < steps; i++) {
                     let possibleMoves = [];
-                    // Right
                     if ((currentPos + 1) % gridSize !== 0 && pathHistory[pathHistory.length-2] !== currentPos + 1) possibleMoves.push({ move: 1, icon: '➡️' });
-                    // Down
                     if (currentPos + gridSize < totalCells && pathHistory[pathHistory.length-2] !== currentPos + gridSize) possibleMoves.push({ move: gridSize, icon: '⬇️' });
-                    // Left
                     if (currentPos % gridSize !== 0 && pathHistory[pathHistory.length-2] !== currentPos - 1) possibleMoves.push({ move: -1, icon: '⬅️' });
-                    // Up
                     if (currentPos - gridSize >= 0 && pathHistory[pathHistory.length-2] !== currentPos - gridSize) possibleMoves.push({ move: -gridSize, icon: '⬆️' });
-
                     if (possibleMoves.length === 0) break;
                     const selected = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-                    currentPos += selected.move;
-                    pathHistory.push(currentPos);
-                    arrowSequence.push(selected.icon);
+                    currentPos += selected.move; pathHistory.push(currentPos); arrowSequence.push(selected.icon);
                 }
-
                 const targetLabel = labels[currentPos];
                 const targetOption = { id: `pos_${currentPos}`, icon: targetLabel, isTarget: true };
-                
-                // Smart Distractors: Pick positions somewhat far from start if possible
                 const otherIndices = Array.from({length: totalCells}, (_, i) => i).filter(i => i !== currentPos);
                 const randomWrong = otherIndices.sort(() => 0.5 - Math.random()).slice(0, optionCount - 1);
                 const wrongOptions = randomWrong.map(idx => ({ id: `pos_${idx}`, icon: labels[idx], isTarget: false }));
-
-                setPuzzle({
-                    gameType: 'maze', gridSize, labels, arrows: arrowSequence,
-                    options: [targetOption, ...wrongOptions].sort(() => 0.5 - Math.random()),
-                    targetId: targetOption.id, startIndex: startPos, instruction: "Ikuti panah! Dimana Kucing sekarang?"
-                });
+                setPuzzle({ gameType: 'maze', gridSize, labels, arrows: arrowSequence, options: [targetOption, ...wrongOptions].sort(() => 0.5 - Math.random()), targetId: targetOption.id, startIndex: startPos, instruction: "Ikuti panah! Dimana Kucing sekarang?" });
             };
 
             const generateBlock = (customLevel = null) => {
                 const level = customLevel !== null ? customLevel : userData.block.level;
-                let gridSize = 3; let missingCount = 2; let isScattered = false; let optionCount = 2; let lockedCount = 0;
-                let isRotationActive = false;
-
+                let gridSize = 3; let missingCount = 2; let isScattered = false; let optionCount = 2; let lockedCount = 0; let isRotationActive = false;
                 if (level >= 5) { gridSize = 4; missingCount = 3; lockedCount = 1; optionCount = 3; }
                 if (level >= 10) { gridSize = 4; missingCount = 3; lockedCount = 2; optionCount = 4; isScattered = true; isRotationActive = true; }
                 if (level >= 25) { gridSize = 4; missingCount = 4; lockedCount = 3; optionCount = 4; isScattered = true; isRotationActive = true; }
-
                 const totalCells = gridSize * gridSize;
                 const mainPattern = BLOCK_PATTERNS[Math.floor(Math.random() * BLOCK_PATTERNS.length)];
-
-                let missingIndices = [];
-                let startIdx = Math.floor(Math.random() * totalCells);
-                missingIndices.push(startIdx);
-
-                // Build missing blocks (contiguous or scattered)
+                let missingIndices = []; let startIdx = Math.floor(Math.random() * totalCells); missingIndices.push(startIdx);
                 while(missingIndices.length < missingCount) {
                     if (isScattered) {
-                        let nextIdx = Math.floor(Math.random() * totalCells);
-                        if (!missingIndices.includes(nextIdx)) missingIndices.push(nextIdx);
+                        let nextIdx = Math.floor(Math.random() * totalCells); if (!missingIndices.includes(nextIdx)) missingIndices.push(nextIdx);
                     } else {
-                        let lastIdx = missingIndices[missingIndices.length-1];
-                        let neighbors = [];
+                        let lastIdx = missingIndices[missingIndices.length-1]; let neighbors = [];
                         if ((lastIdx + 1) % gridSize !== 0) neighbors.push(lastIdx + 1);
                         if (lastIdx % gridSize !== 0) neighbors.push(lastIdx - 1);
                         if (lastIdx + gridSize < totalCells) neighbors.push(lastIdx + gridSize);
@@ -297,44 +278,19 @@
                     }
                 }
                 missingIndices.sort((a,b) => a-b);
-
-                // Locked Blocks
-                let lockedIndices = [];
-                let safeIndices = Array.from({length: totalCells}, (_,i) => i).filter(i => !missingIndices.includes(i));
-                for(let i=0; i<lockedCount; i++){
-                    if (safeIndices.length === 0) break;
-                    let pick = Math.floor(Math.random() * safeIndices.length);
-                    lockedIndices.push(safeIndices[pick]);
-                    safeIndices.splice(pick, 1);
-                }
-
-                let gridState = Array(totalCells).fill('filled');
-                missingIndices.forEach(i => gridState[i] = 'hole');
-                lockedIndices.forEach(i => gridState[i] = 'locked');
-
-                // Options
+                let lockedIndices = []; let safeIndices = Array.from({length: totalCells}, (_,i) => i).filter(i => !missingIndices.includes(i));
+                for(let i=0; i<lockedCount; i++){ if (safeIndices.length === 0) break; let pick = Math.floor(Math.random() * safeIndices.length); lockedIndices.push(safeIndices[pick]); safeIndices.splice(pick, 1); }
+                let gridState = Array(totalCells).fill('filled'); missingIndices.forEach(i => gridState[i] = 'hole'); lockedIndices.forEach(i => gridState[i] = 'locked');
                 const targetOption = { id: 'correct', indices: [...missingIndices], isTarget: true, isRotated: false };
                 if (isRotationActive && Math.random() > 0.4) targetOption.isRotated = true;
-
                 const wrongOpts = [];
                 for (let i=0; i < optionCount - 1; i++) {
                     let fakeIndices = [...missingIndices];
-                    if (Math.random() > 0.5 && fakeIndices.length > 0) fakeIndices[0] = (fakeIndices[0] + 1) % totalCells; // Shift
-                    else {
-                        if (fakeIndices.length > 1) fakeIndices.pop(); // Remove
-                        else {
-                             let r = Math.floor(Math.random() * totalCells);
-                             if (!fakeIndices.includes(r)) fakeIndices.push(r); // Add
-                        }
-                    }
+                    if (Math.random() > 0.5 && fakeIndices.length > 0) fakeIndices[0] = (fakeIndices[0] + 1) % totalCells;
+                    else { if (fakeIndices.length > 1) fakeIndices.pop(); else { let r = Math.floor(Math.random() * totalCells); if (!fakeIndices.includes(r)) fakeIndices.push(r); } }
                     wrongOpts.push({ id: `wrong_${i}`, indices: fakeIndices, isTarget: false, isRotated: isRotationActive && Math.random() > 0.5 });
                 }
-
-                setPuzzle({
-                    gameType: 'block', gridSize, gridState, gridPattern: mainPattern,
-                    options: [targetOption, ...wrongOpts].sort(() => 0.5 - Math.random()),
-                    targetId: 'correct', instruction: isRotationActive ? "Pasang blok! (Bisa diputar)" : "Pasang blok yang cocok!"
-                });
+                setPuzzle({ gameType: 'block', gridSize, gridState, gridPattern: mainPattern, options: [targetOption, ...wrongOpts].sort(() => 0.5 - Math.random()), targetId: 'correct', instruction: isRotationActive ? "Pasang blok! (Bisa diputar)" : "Pasang blok yang cocok!" });
             };
 
             const generateMemory = (customLevel = null) => {
@@ -343,25 +299,13 @@
                 if (level >= 5) { itemCount = 4; duration = 4; optionCount = 3; }
                 if (level >= 15) { itemCount = 5; duration = 3; optionCount = 4; }
                 if (level >= 25) { itemCount = 6; duration = 3; optionCount = 4; }
-
                 const shuffledPool = [...MEMORY_EMOJIS].sort(() => 0.5 - Math.random());
                 const shownItems = shuffledPool.slice(0, itemCount);
                 const targetItem = shownItems[Math.floor(Math.random() * shownItems.length)];
-                
-                // Distractors must NOT be in shown items
-                const notShown = shuffledPool.slice(itemCount); 
-                const distractors = notShown.slice(0, optionCount - 1);
-                
-                const options = [
-                    { id: 'correct', icon: targetItem, isTarget: true },
-                    ...distractors.map((item, i) => ({ id: `wrong_${i}`, icon: item, isTarget: false }))
-                ];
-
+                const notShown = shuffledPool.slice(itemCount); const distractors = notShown.slice(0, optionCount - 1);
+                const options = [{ id: 'correct', icon: targetItem, isTarget: true }, ...distractors.map((item, i) => ({ id: `wrong_${i}`, icon: item, isTarget: false }))];
                 setMemTimer(100);
-                setPuzzle({
-                    gameType: 'memory', phase: 'memorize', items: shownItems, duration: duration,
-                    options: options.sort(() => 0.5 - Math.random()), targetId: 'correct', instruction: "Hafalkan benda ini!"
-                });
+                setPuzzle({ gameType: 'memory', phase: 'memorize', items: shownItems, duration: duration, options: options.sort(() => 0.5 - Math.random()), targetId: 'correct', instruction: "Hafalkan benda ini!" });
             };
 
             const generateSecret = (customLevel = null) => {
@@ -370,110 +314,105 @@
                 if (level >= 5) { pairCount = 4; qLength = 3; optionCount = 3; }
                 if (level >= 15) { pairCount = 5; qLength = 3; optionCount = 4; }
                 if (level >= 25) { pairCount = 5; qLength = 4; optionCount = 4; }
-
                 const shuffledIcons = [...CODE_EMOJIS].sort(()=>0.5-Math.random()).slice(0, pairCount);
                 const shuffledVals = [...CODE_VALS].sort(()=>0.5-Math.random()).slice(0, pairCount);
-                
-                let legend = [];
-                for(let i=0; i<pairCount; i++) legend.push({ icon: shuffledIcons[i], val: shuffledVals[i] });
-
-                let questionIcons = [];
-                let answerStr = "";
-                for(let i=0; i<qLength; i++){
-                    const pick = legend[Math.floor(Math.random() * legend.length)];
-                    questionIcons.push(pick.icon);
-                    answerStr += pick.val;
-                }
-
+                let legend = []; for(let i=0; i<pairCount; i++) legend.push({ icon: shuffledIcons[i], val: shuffledVals[i] });
+                let questionIcons = []; let answerStr = "";
+                for(let i=0; i<qLength; i++){ const pick = legend[Math.floor(Math.random() * legend.length)]; questionIcons.push(pick.icon); answerStr += pick.val; }
                 const targetOption = { id: 'correct', text: answerStr, isTarget: true };
                 const wrongOpts = [];
                 for(let i=0; i<optionCount-1; i++){
                     let fakeStr = "";
-                    if(Math.random() > 0.5) {
-                        fakeStr = answerStr.split('').sort(()=>0.5-Math.random()).join('');
-                        if (fakeStr === answerStr) fakeStr = answerStr.split('').reverse().join('');
-                    } else {
-                        for(let k=0; k<qLength; k++) fakeStr += legend[Math.floor(Math.random()*legend.length)].val;
-                    }
+                    if(Math.random() > 0.5) { fakeStr = answerStr.split('').sort(()=>0.5-Math.random()).join(''); if (fakeStr === answerStr) fakeStr = answerStr.split('').reverse().join(''); } 
+                    else { for(let k=0; k<qLength; k++) fakeStr += legend[Math.floor(Math.random()*legend.length)].val; }
                     if(fakeStr === answerStr) fakeStr += "X"; 
                     wrongOpts.push({ id: `wrong_${i}`, text: fakeStr, isTarget: false });
                 }
-
-                setPuzzle({
-                    gameType: 'secret', legend, question: questionIcons,
-                    options: [targetOption, ...wrongOpts].sort(()=>0.5-Math.random()),
-                    targetId: 'correct', instruction: "Terjemahkan kodenya!"
-                });
+                setPuzzle({ gameType: 'secret', legend, question: questionIcons, options: [targetOption, ...wrongOpts].sort(()=>0.5-Math.random()), targetId: 'correct', instruction: "Terjemahkan kodenya!" });
             };
 
-            // --- MAIN CONTROLLERS ---
-            
+            // --- CONTROLLERS ---
             const startGame = (type, mode) => {
                 setActiveGame(type);
                 if (mode === 'new') {
                     setUserData(p => ({ ...p, lives: 3, [type]: { level: 0, score: 0 } }));
                 }
                 setScreen('game');
+                // Use switch to guarantee correct generator call
                 setTimeout(() => {
                     const lv = userData[type].level;
-                    if (type === 'maze') generateMaze(lv);
-                    else if (type === 'block') generateBlock(lv);
-                    else if (type === 'memory') generateMemory(lv);
-                    else generateSecret(lv);
+                    switch(type) {
+                        case 'maze': generateMaze(lv); break;
+                        case 'block': generateBlock(lv); break;
+                        case 'memory': generateMemory(lv); break;
+                        case 'secret': generateSecret(lv); break;
+                    }
                 }, 50);
             };
 
             const startDailyChallenge = () => {
-                const games = ['maze', 'block', 'memory', 'secret'];
-                const randomGame = games[Math.floor(Math.random() * games.length)];
-                setActiveGame(randomGame);
+                if (isDailyDone()) return;
+                setActiveGame('daily');
                 setScreen('game');
-                // Daily challenge set to current level or fixed higher difficulty? Let's use current level.
+                const games = ['maze', 'block', 'memory', 'secret'];
+                const randomType = games[Math.floor(Math.random() * games.length)];
+                
                 setTimeout(() => {
-                    if (randomGame === 'maze') generateMaze();
-                    else if (randomGame === 'block') generateBlock();
-                    else if (randomGame === 'memory') generateMemory();
-                    else generateSecret();
+                    // Daily challenge is slightly harder (Level 15 difficulty equivalent)
+                    const diff = 15;
+                    switch(randomType) {
+                        case 'maze': generateMaze(diff); break;
+                        case 'block': generateBlock(diff); break;
+                        case 'memory': generateMemory(diff); break;
+                        case 'secret': generateSecret(diff); break;
+                    }
                 }, 50);
             };
 
             const nextLevel = () => {
-                if (activeGame === 'maze') generateMaze();
-                else if (activeGame === 'block') generateBlock();
-                else if (activeGame === 'memory') generateMemory();
-                else generateSecret();
+                if(activeGame === 'daily') {
+                    // Should not happen as daily is 1-off, but safe fallback
+                    setScreen('menu');
+                    return;
+                }
+                switch(activeGame) {
+                    case 'maze': generateMaze(); break;
+                    case 'block': generateBlock(); break;
+                    case 'memory': generateMemory(); break;
+                    case 'secret': generateSecret(); break;
+                }
             };
 
             const handleAnswer = (opt) => {
                 if (feedback === 'correct') return;
 
                 if (opt.isTarget) {
-                    playSound('correct');
-                    setFeedback('correct');
-                    setWrongId(null);
+                    playSound('correct'); setFeedback('correct'); setWrongId(null);
+                    
                     setTimeout(() => {
-                        // UPDATE STATS & SCORE
-                        setUserData(p => ({
-                            ...p,
-                            stars: p.stars + 10,
-                            stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
-                            [activeGame]: {
-                                level: p[activeGame].level + 1,
-                                score: p[activeGame].score + 10
-                            }
-                        }));
-                        setScreen('result'); setFeedback(null);
+                        if(activeGame === 'daily') {
+                            const today = new Date().toDateString();
+                            setUserData(p => ({ ...p, stars: p.stars + 50, dailyChallenge: { lastPlayed: today } }));
+                            setScreen('result_daily');
+                        } else {
+                            setUserData(p => ({
+                                ...p, stars: p.stars + 10,
+                                stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
+                                [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
+                            }));
+                            setScreen('result');
+                        }
+                        setFeedback(null);
                     }, 500);
                 } else {
-                    playSound('wrong');
-                    setWrongId(opt.id);
-                    // UPDATE STATS & LIVES
-                    setUserData(p => ({ 
-                        ...p, 
-                        lives: Math.max(0, p.lives-1), 
-                        stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], l: p.stats[activeGame].l + 1 } },
-                        lastLifeLost: p.lives===3?Date.now():p.lastLifeLost 
-                    }));
+                    playSound('wrong'); setWrongId(opt.id);
+                    if (activeGame !== 'daily') {
+                        setUserData(p => ({ 
+                            ...p, lives: Math.max(0, p.lives-1), 
+                            stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], l: p.stats[activeGame].l + 1 } },
+                            lastLifeLost: p.lives===3?Date.now():p.lastLifeLost 
+                        }));
+                    }
                     setTimeout(() => setWrongId(null), 500);
                 }
             };
@@ -481,40 +420,72 @@
             const unlockReward = (index) => {
                 if (userData.stars >= 50 && !userData.unlockedRewards.includes(index)) {
                     playSound('unlock');
-                    setUserData(p => ({
-                        ...p,
-                        stars: p.stars - 50,
-                        unlockedRewards: [...p.unlockedRewards, index]
-                    }));
+                    setUserData(p => ({ ...p, stars: p.stars - 50, unlockedRewards: [...p.unlockedRewards, index] }));
                 }
             };
 
-            // --- RENDER FUNCTIONS ---
-
+            // --- RENDER HELPERS ---
             const renderOptionGrid = (indices, gridSize, pattern, isRotated) => {
                 let matrix = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
                 indices.forEach(idx => {
-                    const r = Math.floor(idx / gridSize);
-                    const c = idx % gridSize;
+                    const r = Math.floor(idx / gridSize); const c = idx % gridSize;
                     if(r < gridSize && c < gridSize) matrix[r][c] = 1;
                 });
                 if (isRotated) matrix = rotateMatrix(matrix);
                 return (
                     <div className="mini-grid" style={{gridTemplateColumns: `repeat(${gridSize}, 1fr)`}}>
                         {matrix.flat().map((val, i) => (
-                            <div key={i} className={`mini-cell ${val===1 ? 'active' : 'empty'}`} 
-                                 style={{background: val===1 ? pattern : 'transparent'}}></div>
+                            <div key={i} className={`mini-cell ${val===1 ? 'active' : 'empty'}`} style={{background: val===1 ? pattern : 'transparent'}}></div>
                         ))}
                     </div>
                 );
             };
 
-            // 1. MENU SCREEN
+            const RadarChart = () => {
+                const stats = userData.stats;
+                const getWinRate = (key) => {
+                    const s = stats[key];
+                    const total = s.w + s.l;
+                    return total === 0 ? 0 : (s.w / total);
+                };
+
+                const rates = [getWinRate('maze'), getWinRate('block'), getWinRate('memory'), getWinRate('secret')];
+                // Points: Top, Right, Bottom, Left
+                const center = 100; const radius = 80;
+                const points = [
+                    `${center},${center - (radius * rates[0])}`, // Maze (Top)
+                    `${center + (radius * rates[1])},${center}`, // Block (Right)
+                    `${center},${center + (radius * rates[2])}`, // Memory (Bottom)
+                    `${center - (radius * rates[3])},${center}`  // Secret (Left)
+                ].join(" ");
+
+                return (
+                    <div className="radar-chart-container">
+                        <span className="radar-label top">Labirin</span>
+                        <span className="radar-label right">Blok</span>
+                        <span className="radar-label bottom">Ingatan</span>
+                        <span className="radar-label left">Kode</span>
+                        <svg width="200" height="200" viewBox="0 0 200 200" style={{background:'#1e293b', borderRadius:'50%'}}>
+                            {/* Grid Lines */}
+                            <circle cx="100" cy="100" r="20" fill="none" stroke="#334155" strokeWidth="1"/>
+                            <circle cx="100" cy="100" r="40" fill="none" stroke="#334155" strokeWidth="1"/>
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#334155" strokeWidth="1"/>
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#334155" strokeWidth="1"/>
+                            <line x1="100" y1="20" x2="100" y2="180" stroke="#334155" />
+                            <line x1="20" y1="100" x2="180" y2="100" stroke="#334155" />
+                            {/* Data Poly */}
+                            <polygon points={points} fill="rgba(245, 158, 11, 0.5)" stroke="#F59E0B" strokeWidth="2" />
+                        </svg>
+                    </div>
+                );
+            };
+
+            // --- SCREENS ---
             if (screen === 'menu') return (
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.0</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.1</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -522,10 +493,12 @@
                     </div>
 
                     <div className="mb-4">
-                        <button onClick={startDailyChallenge} className="menu-btn daily w-full text-white animate-pulse">⚡ TANTANGAN HARIAN</button>
+                        <button onClick={startDailyChallenge} disabled={isDailyDone()} 
+                             className={`menu-btn daily w-full text-white ${isDailyDone() ? 'completed' : 'animate-pulse'}`}>
+                             {isDailyDone() ? '✅ TANTANGAN SELESAI' : '⚡ TANTANGAN HARIAN (50⭐)'}
+                        </button>
                     </div>
 
-                    {/* Game Cards */}
                     <div className="game-card">
                         <div className="game-card-title">🧭 Labirin</div>
                         <div className="text-slate-400 text-xs mb-2">Level {userData.maze.level + 1}</div>
@@ -559,32 +532,23 @@
                         </div>
                     </div>
                     
-                    <div className="text-center text-slate-500 text-[10px] mt-4 pb-4">
-                        Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}
-                    </div>
+                    <div className="text-center text-slate-500 text-[10px] mt-4 pb-4">Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}</div>
                 </div>
             );
 
-            // 2. DASHBOARD SCREEN
             if (screen === 'dashboard') return (
                 <div className="app-container p-6">
-                    <h2 className="text-xl font-bold text-white mb-6 text-center">📊 DASHBOARD ORANG TUA</h2>
-                    <div className="grid gap-4">
+                    <h2 className="text-xl font-bold text-white mb-2 text-center">📊 STATISTIK</h2>
+                    <RadarChart />
+                    <div className="grid gap-2 mt-4">
                         {['maze', 'block', 'memory', 'secret'].map(g => {
                             const stats = userData.stats[g];
                             const total = stats.w + stats.l;
                             const rate = total > 0 ? Math.round((stats.w/total)*100) : 0;
-                            const color = rate > 75 ? '#4ADE80' : (rate > 50 ? '#F59E0B' : '#EF4444');
                             return (
-                                <div key={g} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700">
-                                    <div>
-                                        <div className="text-white font-bold capitalize text-lg">{g}</div>
-                                        <div className="text-slate-400 text-xs">Total Main: {total}</div>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <div className="progress-circle" style={{borderColor: color}}>{rate}%</div>
-                                        <span className="text-[10px] text-slate-500 mt-1">Akurasi</span>
-                                    </div>
+                                <div key={g} className="bg-slate-800 p-3 rounded-lg flex justify-between items-center">
+                                    <span className="text-white font-bold capitalize text-sm">{g}</span>
+                                    <span className="text-slate-400 text-xs">{rate}% Akurasi ({stats.w}/{total})</span>
                                 </div>
                             )
                         })}
@@ -593,7 +557,6 @@
                 </div>
             );
 
-            // 3. COLLECTION SCREEN
             if (screen === 'collection') return (
                 <div className="app-container p-6">
                     <div className="text-center mb-4">
@@ -617,26 +580,33 @@
                 </div>
             );
 
-            // 4. RESULT SCREEN
+            // RESULT SCREENS
             if (screen === 'result') return (
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-7xl mb-6 animate-bounce">🌟</div>
                     <h2 className="text-3xl font-bold text-white mb-2">HEBAT!</h2>
                     <p className="text-amber-500 font-bold mb-8">+10 Bintang</p>
-                    <button onClick={() => { setScreen('game'); nextLevel(); }} className="menu-btn bg-green-600 w-full max-w-[240px] py-4 text-xl shadow-lg mb-4">
-                        LANJUT LEVEL
-                    </button>
+                    <button onClick={() => { setScreen('game'); nextLevel(); }} className="menu-btn bg-green-600 w-full max-w-[240px] py-4 text-xl shadow-lg mb-4">LANJUT LEVEL</button>
                     <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold uppercase text-xs">Ke Menu Utama</button>
                 </div>
             );
+            
+            if (screen === 'result_daily') return (
+                <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
+                    <div className="text-7xl mb-6 animate-bounce">⚡</div>
+                    <h2 className="text-2xl font-bold text-white mb-2">TANTANGAN SELESAI!</h2>
+                    <p className="text-amber-500 font-bold mb-8">+50 Bintang Bonus</p>
+                    <button onClick={() => setScreen('menu')} className="menu-btn w-full max-w-[240px]">KEMBALI KE MENU</button>
+                </div>
+            );
 
-            // 5. GAME SCREEN
+            // GAME SCREEN
             return (
                 <div className="app-container">
                     <div className="hud-bar">
                         <div className="flex flex-col items-center"><span className="text-lg">❤️ {userData.lives}</span><span className="text-[8px] text-slate-400">{regenTimer}</span></div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame} Lv {userData[activeGame].level + 1}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame==='daily'?'Tantangan':activeGame} Lv {activeGame==='daily'?'?':userData[activeGame].level + 1}</span>
                             <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
                         </div>
                         <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow">⭐ {userData.stars}</div>
@@ -647,29 +617,22 @@
                             <div className="text-center mt-20">
                                 <div className="text-6xl mb-4">💔</div>
                                 <h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2>
-                                <p className="text-slate-400 text-xs mb-8">Tunggu sebentar ya...</p>
                                 <button onClick={() => setScreen('menu')} className="menu-btn w-full">KEMBALI KE MENU</button>
                             </div>
                         ) : puzzle ? (
                             <div className="w-full flex flex-col items-center h-full">
                                 <h2 className="instruction-text">{puzzle.instruction}</h2>
-                                
                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
-                                    {/* MAZE RENDER */}
                                     {puzzle.gameType === 'maze' && (
                                         <>
                                             <div className="maze-arrows-box">{puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}</div>
                                             <div className={`maze-grid grid-${puzzle.gridSize}`} style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                                 {puzzle.labels.map((l, i) => (
-                                                    <div key={i} className={`maze-cell ${i===puzzle.startIndex ? 'start' : ''} ${puzzle.gridSize===4?'text-sm':''} ${puzzle.gridSize===5?'text-xs':''}`}>
-                                                        {i===puzzle.startIndex ? '🐱' : l}
-                                                    </div>
+                                                    <div key={i} className={`maze-cell ${i===puzzle.startIndex ? 'start' : ''} ${puzzle.gridSize===4?'text-sm':''} ${puzzle.gridSize===5?'text-xs':''}`}>{i===puzzle.startIndex ? '🐱' : l}</div>
                                                 ))}
                                             </div>
                                         </>
                                     )}
-
-                                    {/* BLOCK RENDER */}
                                     {puzzle.gameType === 'block' && (
                                         <div className="block-target-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.gridState.map((status, i) => (
@@ -677,15 +640,11 @@
                                             ))}
                                         </div>
                                     )}
-
-                                    {/* MEMORY RENDER */}
                                     {puzzle.gameType === 'memory' && (
                                         <>
                                             {puzzle.phase === 'memorize' ? (
                                                 <div className="w-full flex flex-col items-center">
-                                                    <div className="memory-shelf">
-                                                        {puzzle.items.map((item, i) => <div key={i} className="memory-item">{item}</div>)}
-                                                    </div>
+                                                    <div className="memory-shelf">{puzzle.items.map((item, i) => <div key={i} className="memory-item">{item}</div>)}</div>
                                                     <div className="timer-bar-container"><div className="timer-bar-fill" style={{width: `${memTimer}%`}}></div></div>
                                                 </div>
                                             ) : (
@@ -693,42 +652,28 @@
                                             )}
                                         </>
                                     )}
-
-                                    {/* SECRET CODE RENDER */}
                                     {puzzle.gameType === 'secret' && (
                                         <div className="w-full flex flex-col items-center">
                                             <div className="code-legend">
-                                                {puzzle.legend.map((l, i) => (
-                                                    <div key={i} className="legend-item">
-                                                        <div className="legend-icon">{l.icon}</div>
-                                                        <div className="legend-val">{l.val}</div>
-                                                    </div>
-                                                ))}
+                                                {puzzle.legend.map((l, i) => <div key={i} className="legend-item"><div className="legend-icon">{l.icon}</div><div className="legend-val">{l.val}</div></div>)}
                                             </div>
-                                            <div className="code-question-box">
-                                                {puzzle.question.map((q, i) => <div key={i} className="question-icon">{q}</div>)}
-                                                <div className="text-4xl text-white font-bold ml-2">= ?</div>
-                                            </div>
+                                            <div className="code-question-box">{puzzle.question.map((q, i) => <div key={i} className="question-icon">{q}</div>)}<div className="text-4xl text-white font-bold ml-2">= ?</div></div>
                                         </div>
                                     )}
                                 </div>
-
-                                {/* OPTION GRID */}
                                 {!(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                     <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                         {puzzle.options.map((opt, i) => (
-                                            <button key={i} onClick={() => handleAnswer(opt)} 
-                                                className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
+                                            <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
                                                 {puzzle.gameType === 'maze' ? opt.icon : 
                                                  puzzle.gameType === 'block' ? renderOptionGrid(opt.indices, puzzle.gridSize, puzzle.gridPattern, opt.isRotated) :
-                                                 puzzle.gameType === 'secret' ? <span className="text-3xl font-bold">{opt.text}</span> :
-                                                 opt.icon}
+                                                 puzzle.gameType === 'secret' ? <span className="text-3xl font-bold">{opt.text}</span> : opt.icon}
                                             </button>
                                         ))}
                                     </div>
                                 )}
                             </div>
-                        ) : <div className="text-white">Memuat Game...</div>}
+                        ) : <div className="text-white">Memuat...</div>}
                     </div>
                 </div>
             );
