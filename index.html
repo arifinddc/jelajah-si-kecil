@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil: Phi Brain Junior</title>
+    <title>Akademi Sage: Phi Brain Junior</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,111 +11,79 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
         
-        /* Reset & Base */
         body, html { 
             margin: 0; padding: 0; 
             height: 100%; width: 100%;
             overflow: hidden; 
             font-family: 'Fredoka', sans-serif; 
-            background: #0F172A; /* Background luar (untuk PC) */
+            background: #0F172A;
+            -webkit-user-select: none; user-select: none;
         }
 
         #root { height: 100%; width: 100%; }
 
-        /* Container Utama HP */
+        /* Container Utama */
         .app-container {
-            position: fixed;
-            inset: 0; /* Full Screen mutlak */
-            display: flex;
-            flex-direction: column;
-            background: #1E293B; /* Warna Slate-800 */
-            max-width: 500px; /* Batas lebar untuk tablet/PC */
-            margin: 0 auto;
-            border-left: 2px solid #F59E0B;
-            border-right: 2px solid #F59E0B;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+            max-width: 500px; margin: 0 auto;
+            border-left: 2px solid #F59E0B; border-right: 2px solid #F59E0B;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
 
-        /* Styling Elemen Game */
+        /* Menu Styles */
+        .menu-btn {
+            width: 100%; background: #F59E0B; color: white;
+            padding: 1.2rem; margin-bottom: 1rem;
+            border-radius: 1.5rem; font-size: 1.5rem; font-weight: bold;
+            box-shadow: 0 6px 0 #B45309; transition: all 0.1s;
+        }
+        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #B45309; }
+        .menu-btn.disabled { background: #475569; box-shadow: none; opacity: 0.5; pointer-events: none; }
+
+        /* HUD Styles */
         .hud-bar {
-            height: 80px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 1.5rem;
-            background: #0F172A;
-            border-bottom: 3px solid #F59E0B;
-            flex-shrink: 0;
+            height: 80px; flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 1.5rem; background: rgba(15, 23, 42, 0.9);
+            border-bottom: 3px solid #F59E0B; z-index: 10;
         }
 
-        .main-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center; /* Rata tengah Vertikal */
-            padding: 20px;
-            width: 100%;
-            text-align: center; /* Rata tengah Horizontal */
-        }
-
-        /* Puzzle Styles */
-        .sudoku-grid { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; 
-            background: #F59E0B; padding: 10px; border-radius: 1rem; 
-        }
-        .sudoku-cell { 
-            width: 70px; height: 70px; background: #334155; 
-            border-radius: 0.5rem; display: flex; align-items: center; 
-            justify-content: center; font-size: 2.5rem; 
-        }
-        
-        .symmetry-box { 
-            width: 180px; height: 180px; background: #334155; 
-            border-radius: 1.5rem; overflow: hidden; border: 4px solid #94A3B8; 
+        /* Puzzle Elements */
+        .target-box {
+            width: 150px; height: 150px;
+            background: #1e293b; border: 4px dashed #94a3b8; border-radius: 2rem;
             display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem; font-size: 5rem;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
-        .symmetry-half { font-size: 9rem; clip-path: inset(0 50% 0 0); transform: scale(1.4); }
-        .symmetry-option { font-size: 4rem; clip-path: inset(0 0 0 50%); transform: scale(1.6) translateX(-25%); }
+        .target-box.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
 
-        /* Target Slot (Kotak Tengah) */
-        .target-slot { 
-            width: 140px; height: 140px; 
-            background: #1e293b; 
-            border: 4px dashed #475569; 
-            border-radius: 2rem; 
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 2rem;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-        }
+        /* Grid Logic */
+        .grid-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #F59E0B; padding: 10px; border-radius: 1rem; }
+        .grid-cell { width: 70px; height: 70px; background: #334155; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
 
-        /* Grid Jawaban */
-        .option-grid { 
-            display: grid; 
-            gap: 15px; 
-            width: 100%; 
-            max-width: 350px; /* Agar tombol tidak terlalu lebar di tablet */
-        }
+        .sequence-row { display: flex; gap: 10px; background: #334155; padding: 15px; border-radius: 1.5rem; margin-bottom: 2rem; border: 2px solid #475569; }
         
-        .btn-choice { 
-            background: #334155; 
-            border: 4px solid #475569; 
-            border-radius: 1.5rem; 
-            aspect-ratio: 1; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 3rem; 
-            transition: transform 0.1s;
-            box-shadow: 0 4px 0 #1e293b;
+        .option-grid { display: grid; gap: 12px; width: 100%; max-width: 380px; }
+        .btn-choice {
+            background: white; border: 4px solid #CBD5E1;
+            border-radius: 1.5rem; aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3.5rem; transition: transform 0.1s;
+            box-shadow: 0 6px 0 #94A3B8; color: #0F172A;
         }
-        .btn-choice:active { transform: scale(0.95); box-shadow: 0 2px 0 #1e293b; }
-        .btn-choice.correct { background: #22C55E; border-color: #166534; }
-        .btn-choice.wrong { background: #EF4444; border-color: #991B1B; }
+        .btn-choice:active { transform: scale(0.95); box-shadow: 0 2px 0 #94A3B8; }
+        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 6px 0 #166534; }
+        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 6px 0 #991B1B; }
 
-        /* Helpers */
-        .glow-gold { border-color: #F59E0B; box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
-        button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        /* Modal */
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        button { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body>
@@ -124,7 +92,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- DATABASE ASET (Disederhanakan & Valid) ---
+        // --- DATABASE ---
         const ASSETS = {
             letters: [
                 { id: "la", icon: "🅰️" }, { id: "lb", icon: "🅱️" }, { id: "lc", icon: "🅲" }, 
@@ -139,53 +107,40 @@
                 { id: "a2", icon: "🐶", name: "Anjing", sound: "Guk Guk" },
                 { id: "f1", icon: "🍎", name: "Apel", color: "merah", type: "food" },
                 { id: "f2", icon: "🍌", name: "Pisang", color: "kuning", type: "food" },
-                { id: "c1", icon: "🔴", type: "color" }, 
-                { id: "c2", icon: "🔵", type: "color" }
+                { id: "c1", icon: "🔴", color: "merah", type: "color" }, 
+                { id: "c2", icon: "🔵", color: "biru", type: "color" },
+                { id: "c3", icon: "🟡", color: "kuning", type: "color" }
             ]
         };
 
-        const SCHEMAS = ["phi_matching", "phi_shadow", "phi_symmetry", "phi_sudoku", "phi_sound", "phi_counting"];
+        const SCHEMAS = [
+            "phi_matching", // Cari Sama (Fixed)
+            "phi_shadow",   // Bayangan
+            "phi_sequence", // Urutan (New)
+            "phi_odd",      // Cari Beda (New)
+            "phi_sudoku",   // Logika Warna
+            "phi_counting"  // Berhitung
+        ];
 
         const App = () => {
+            const [screen, setScreen] = useState('menu'); // menu, game, result
             const [gameState, setGameState] = useState('idle');
+            
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('phi_sage_v12_4');
+                const saved = localStorage.getItem('phi_sage_v13');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
 
             const [currentPuzzle, setCurrentPuzzle] = useState(null);
-            const [feedback, setFeedback] = useState(null); // 'correct' | 'wrong' | null
+            const [feedback, setFeedback] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
-            const [showBonus, setShowBonus] = useState(false);
 
-            // --- AUDIO ENGINE ---
-            const speak = (txt) => {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const u = new SpeechSynthesisUtterance(txt);
-                    u.lang = 'id-ID'; u.rate = 0.9;
-                    window.speechSynthesis.speak(u);
-                }
-            };
-
-            const playTone = (isCorrect) => {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.frequency.setValueAtTime(isCorrect ? 880 : 220, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
-                } catch(e) {}
-            };
-
-            // --- LOGIC REGENERASI NYAWA ---
+            // --- SYSTEM: Life Regen ---
             useEffect(() => {
                 const timer = setInterval(() => {
                     if (userData.lives < 3 && userData.lastLifeLost) {
                         const diff = Date.now() - userData.lastLifeLost;
-                        if (diff >= 600000) {
+                        if (diff >= 600000) { // 10 Menit
                             setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1 < 3 ? Date.now() : null }));
                         } else {
                             const rem = 600000 - diff;
@@ -196,57 +151,94 @@
                 return () => clearInterval(timer);
             }, [userData.lives, userData.lastLifeLost]);
 
-            useEffect(() => { localStorage.setItem('phi_sage_v12_4', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('phi_sage_v13', JSON.stringify(userData)); }, [userData]);
 
-            // --- GENERATOR LEVEL (Logic Inti) ---
+            // --- AUDIO ---
+            const speak = (txt) => {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(txt);
+                    u.lang = 'id-ID'; u.rate = 0.9;
+                    window.speechSynthesis.speak(u);
+                }
+            };
+            
+            const playTone = (type) => {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    if (type === 'correct') osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    else osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.2);
+                } catch(e) {}
+            };
+
+            // --- MENU FUNCTIONS ---
+            const startNewGame = () => {
+                setUserData({ score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null });
+                setScreen('game');
+                setTimeout(nextMisi, 100);
+            };
+
+            const continueGame = () => {
+                setScreen('game');
+                setTimeout(nextMisi, 100);
+            };
+
+            // --- GAME LOGIC ---
             const nextMisi = () => {
-                if (userData.lives <= 0) return speak("Energi habis, istirahat dulu ya.");
+                if (userData.lives <= 0) return; // Prevent play if no lives
                 
+                // Randomly pick schema
                 const type = SCHEMAS[Math.floor(Math.random() * SCHEMAS.length)];
                 let target, options = [], meta = {}, instruction = "";
+                const pool = [...ASSETS.misc, ...ASSETS.numbers, ...ASSETS.letters];
 
-                // Logic Spesifik per Game
-                if (type === "phi_counting") {
-                    // FIX: Pastikan yang dihitung adalah APEL (f1), bukan random
-                    const count = Math.floor(Math.random() * 3) + 1; // 1, 2, atau 3
-                    const item = ASSETS.misc.find(a => a.id === "f1"); // Apel
-                    
-                    // Generate string icon (misal: "🍎🍎")
-                    const correctIcon = Array(count).fill(item.icon).join("");
-                    const wrongIcon = Array(count + 1).fill(item.icon).join("");
-
-                    target = { id: "correct", icon: correctIcon };
-                    options = [target, { id: "wrong", icon: wrongIcon }];
-                    
-                    // FIX: Template Literal langsung agar {param} tidak error
-                    instruction = `Ketuk yang isinya ${count} benda!`;
+                if (type === "phi_matching") {
+                    target = pool[Math.floor(Math.random() * pool.length)];
+                    const distractors = pool.filter(a => a.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 1);
+                    options = [target, ...distractors];
+                    instruction = "Cari yang sama persis!";
+                }
+                else if (type === "phi_shadow") {
+                    target = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
+                    const distractors = ASSETS.misc.filter(a => a.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 1);
+                    options = [target, ...distractors];
+                    instruction = "Tebak bayangan siapa ini?";
+                }
+                else if (type === "phi_sequence") {
+                    // Logic: A B A ?
+                    const a = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
+                    const b = ASSETS.misc.filter(i => i.id !== a.id)[0];
+                    meta = { sequence: [a.icon, b.icon, a.icon, "?"] };
+                    target = b;
+                    options = [a, b];
+                    instruction = "Apa urutan selanjutnya?";
+                }
+                else if (type === "phi_odd") {
+                    // Logic: 3 Same, 1 Different
+                    const common = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
+                    const odd = ASSETS.misc.filter(i => i.id !== common.id)[0];
+                    options = [common, common, odd, common]; // 3 Common, 1 Odd
+                    target = odd; // The target is the unique one
+                    instruction = "Cari satu yang berbeda!";
+                }
+                else if (type === "phi_counting") {
+                    const count = Math.floor(Math.random() * 3) + 1; 
+                    const item = ASSETS.misc.find(a => a.type === 'food');
+                    target = { id: "correct", icon: Array(count).fill(item.icon).join("") };
+                    options = [target, { id: "wrong", icon: Array(count + 1).fill(item.icon).join("") }];
+                    instruction = `Ketuk kotak dengan ${count} benda!`;
                 }
                 else if (type === "phi_sudoku") {
                     const c = ASSETS.misc.filter(a => a.type === "color").sort(() => 0.5 - Math.random());
                     target = c[0];
                     meta = { grid: [c[0].icon, c[1].icon, c[1].icon, "?"] };
                     options = [c[0], c[1]];
-                    instruction = "Lengkapi kotak agar warnanya beda!";
-                }
-                else if (type === "phi_sound") {
-                    const animals = ASSETS.misc.filter(a => a.type === "animal").sort(() => 0.5 - Math.random());
-                    target = animals[0];
-                    options = [target, animals[1], animals[2]].filter(Boolean);
-                    instruction = `Siapa yang suaranya ${target.sound}?`;
-                }
-                else if (type === "phi_symmetry") {
-                    target = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
-                    const others = ASSETS.misc.filter(a => a.id !== target.id).slice(0, 1);
-                    options = [target, ...others];
-                    instruction = "Cari belahan gambar yang cocok!";
-                }
-                else {
-                    // Matching & Shadow
-                    const pool = [...ASSETS.misc, ...ASSETS.numbers];
-                    target = pool[Math.floor(Math.random() * pool.length)];
-                    const others = pool.filter(a => a.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 1); // 2 Pilihan biar mudah
-                    options = [target, ...others];
-                    instruction = type === "phi_shadow" ? "Tebak bayangan siapa ini?" : "Cari yang sama persis!";
+                    instruction = "Warna kotak tidak boleh sama!";
                 }
 
                 setCurrentPuzzle({ type, target, options: options.sort(() => 0.5 - Math.random()), meta, instruction });
@@ -256,78 +248,121 @@
 
             const handleAnswer = (opt) => {
                 if (feedback) return;
-                const isCorrect = opt.id === currentPuzzle.target.id;
+                
+                // Logic Check
+                let isCorrect = false;
+                if (currentPuzzle.type === "phi_odd") {
+                     // For Odd One Out, any option that matches target ID is correct
+                     isCorrect = opt.id === currentPuzzle.target.id;
+                } else {
+                     isCorrect = opt.id === currentPuzzle.target.id;
+                }
 
                 if (isCorrect) {
-                    playTone(true); setFeedback('correct');
+                    playTone('correct'); setFeedback('correct');
                     setTimeout(() => {
                         setUserData(p => ({ ...p, score: p.score + 10, levelIdx: p.levelIdx + 1, streak: p.streak + 1 }));
-                        setGameState('idle'); setFeedback(null);
+                        setScreen('result'); // Go to result screen
+                        setFeedback(null);
                     }, 1000);
                 } else {
-                    playTone(false); setFeedback('wrong');
+                    playTone('wrong'); setFeedback('wrong');
                     setUserData(p => ({ ...p, lives: Math.max(0, p.lives - 1), streak: 0, lastLifeLost: p.lives === 3 ? Date.now() : p.lastLifeLost }));
                     speak("Salah, coba lagi!");
                     setTimeout(() => setFeedback(null), 800);
                 }
             };
 
-            // --- RENDER ---
+            // --- RENDERERS ---
+            
+            // 1. MENU SCREEN
+            if (screen === 'menu') return (
+                <div className="app-container p-8 justify-center items-center text-center">
+                    <div className="text-8xl mb-4 animate-bounce">🧩</div>
+                    <h1 className="text-4xl font-black text-white mb-2 tracking-tighter">AKADEMI SAGE</h1>
+                    <p className="text-slate-400 mb-10 font-bold uppercase tracking-widest text-xs">Phi Brain Junior v13.0</p>
+                    
+                    <button onClick={startNewGame} className="menu-btn border-b-4 border-yellow-700">
+                        MULAI BARU
+                    </button>
+                    
+                    <button onClick={continueGame} className={`menu-btn border-b-4 border-yellow-700 ${userData.levelIdx === 0 ? 'disabled' : ''}`}>
+                        LANJUTKAN (Lv {userData.levelIdx + 1})
+                    </button>
+
+                    <div className="mt-8 text-slate-500 text-sm">
+                        Lives: {userData.lives}/3 <br/> {regenTimer && `Regen: ${regenTimer}`}
+                    </div>
+                </div>
+            );
+
+            // 2. RESULT/TRANSITION SCREEN
+            if (screen === 'result') return (
+                <div className="app-container p-8 justify-center items-center text-center bg-slate-900">
+                    <div className="text-8xl mb-6 animate-pulse">🌟</div>
+                    <h2 className="text-3xl font-bold text-white mb-2">HEBAT!</h2>
+                    <p className="text-amber-400 font-bold text-xl mb-10">+10 Poin</p>
+                    
+                    <button onClick={() => { setScreen('game'); nextMisi(); }} className="menu-btn bg-green-500 border-green-700 shadow-green-900">
+                        LANJUT LEVEL
+                    </button>
+                    <button onClick={() => setScreen('menu')} className="text-slate-400 font-bold mt-4 underline">
+                        Kembali ke Menu
+                    </button>
+                </div>
+            );
+
+            // 3. GAME SCREEN
             return (
                 <div className="app-container">
-                    {/* HUD Header */}
+                    {/* HUD */}
                     <div className="hud-bar">
                         <div className="flex flex-col items-center">
                             <span className="text-2xl drop-shadow-md">❤️ {userData.lives}</span>
                             <span className="text-[10px] text-amber-500 font-bold">{regenTimer}</span>
                         </div>
-                        <div className="flex flex-col items-center">
-                             <div className="text-xs text-slate-400 font-bold tracking-widest uppercase">Misi {userData.levelIdx + 1}</div>
-                             <div className="h-1 w-16 bg-slate-700 rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-amber-500 transition-all" style={{width: `${(userData.streak % 10) * 10}%`}}></div>
-                             </div>
+                        <div className="text-center">
+                            <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">Misi {userData.levelIdx + 1}</div>
                         </div>
                         <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold shadow-lg border border-amber-400">
                             ⭐ {userData.score}
                         </div>
                     </div>
 
-                    {/* Main Area (Centered via Flexbox) */}
-                    <div className="main-area">
-                        {gameState === 'idle' && (
-                            <div className="flex flex-col items-center animate-in zoom-in duration-300 w-full">
-                                <div className="text-8xl mb-6 filter drop-shadow-xl animate-bounce">🧩</div>
-                                <h1 className="text-3xl font-black text-white tracking-tight mb-2">AKADEMI SAGE</h1>
-                                <p className="text-slate-400 mb-8 text-sm">Edisi Junior v12.4</p>
-                                
-                                <button onClick={nextMisi} className="w-full max-w-xs bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-xl font-bold shadow-[0_4px_0_rgb(180,83,9)] active:translate-y-1 active:shadow-none transition-all">
-                                    PECAHKAN
-                                </button>
+                    {/* Main Area */}
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+                        {userData.lives <= 0 ? (
+                            <div className="text-center">
+                                <div className="text-6xl mb-4">😴</div>
+                                <h2 className="text-2xl text-white font-bold mb-4">Istirahat Dulu!</h2>
+                                <p className="text-slate-400 mb-6">Tunggu nyawa terisi kembali.</p>
+                                <button onClick={() => setScreen('menu')} className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold">Ke Menu</button>
                             </div>
-                        )}
-
-                        {gameState === 'playing' && currentPuzzle && (
-                            <div className="flex flex-col items-center w-full h-full justify-between py-4">
-                                {/* Instruksi */}
-                                <h2 className="text-xl font-bold text-slate-100 mb-4 px-2 leading-tight">
+                        ) : gameState === 'playing' && currentPuzzle ? (
+                            <>
+                                <h2 className="text-2xl font-bold text-white mb-6 leading-tight drop-shadow-md">
                                     {currentPuzzle.instruction}
                                 </h2>
                                 
                                 {/* Area Soal */}
-                                <div className="flex-1 flex items-center justify-center w-full">
+                                <div className="mb-6 flex justify-center w-full">
                                     {currentPuzzle.type === "phi_sudoku" ? (
-                                        <div className="sudoku-grid">
-                                            {currentPuzzle.meta.grid.map((cell, i) => <div key={i} className="sudoku-cell">{cell}</div>)}
+                                        <div className="grid-2x2">
+                                            {currentPuzzle.meta.grid.map((c,i)=><div key={i} className="grid-cell">{c}</div>)}
                                         </div>
-                                    ) : currentPuzzle.type === "phi_symmetry" ? (
-                                        <div className="symmetry-box">
-                                            <span className="symmetry-half">{currentPuzzle.target.icon}</span>
+                                    ) : currentPuzzle.type === "phi_sequence" ? (
+                                        <div className="sequence-row">
+                                            {currentPuzzle.meta.sequence.map((c,i)=>
+                                                <span key={i} className={c==="?"?"text-4xl animate-pulse text-amber-400":"text-4xl"}>{c}</span>
+                                            )}
                                         </div>
+                                    ) : currentPuzzle.type === "phi_odd" ? (
+                                        <div className="text-6xl animate-bounce">🤔</div>
                                     ) : (
-                                        <div className="target-slot">
+                                        <div className={`target-box ${currentPuzzle.type === 'phi_matching' ? 'solid' : ''}`}>
                                             {currentPuzzle.type === "phi_shadow" ? 
-                                                <span className="text-8xl grayscale brightness-0 opacity-10">{currentPuzzle.target.icon}</span> : 
-                                                <span className="text-7xl animate-pulse">❓</span>}
+                                                <span className="text-8xl grayscale brightness-0 opacity-20">{currentPuzzle.target.icon}</span> : 
+                                                <span className="text-7xl">{currentPuzzle.type === 'phi_counting' ? '📦' : currentPuzzle.target.icon}</span>}
                                         </div>
                                     )}
                                 </div>
@@ -336,12 +371,14 @@
                                 <div className={`option-grid ${currentPuzzle.options.length > 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
                                     {currentPuzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
-                                            className={`btn-choice ${feedback === 'correct' && opt.id === currentPuzzle.target.id ? 'correct' : ''} ${feedback === 'wrong' && opt.id !== currentPuzzle.target.id ? 'opacity-50' : ''}`}>
-                                            <span className={currentPuzzle.type === "phi_symmetry" ? 'symmetry-option' : ''}>{opt.icon}</span>
+                                            className={`btn-choice ${feedback === 'correct' && opt.id === currentPuzzle.target.id ? 'correct' : ''} ${feedback === 'wrong' && opt.id !== currentPuzzle.target.id ? 'wrong opacity-50' : ''}`}>
+                                            {opt.icon}
                                         </button>
                                     ))}
                                 </div>
-                            </div>
+                            </>
+                        ) : (
+                            <div className="text-white">Memuat...</div>
                         )}
                     </div>
                 </div>
