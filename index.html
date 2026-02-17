@@ -54,7 +54,7 @@
             flex-direction: column;
             align-items: center; 
             justify-content: space-between; 
-            padding: 0.75rem; 
+            padding: 1rem; 
             width: 100%; 
             overflow: hidden;
         }
@@ -64,40 +64,66 @@
             font-weight: 700;
             color: #F1F5F9;
             line-height: 1.2;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
             text-align: center;
+            min-height: 3rem; display: flex; align-items: center;
+        }
+
+        /* Target Display */
+        .target-wrapper {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            width: 100%;
         }
 
         .target-display {
-            width: 100px; height: 100px;
+            width: 120px; height: 120px;
             background: #1e293b; border: 3px dashed #64748b; border-radius: 1.25rem;
             display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; 
-            margin: 0.5rem 0;
+            font-size: 4rem; 
+            transition: all 0.3s;
         }
         .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
+        .target-display.hidden-target { opacity: 0; pointer-events: none; height: 0; margin: 0; } /* Sembunyikan untuk Odd One Out */
 
+        /* Special Puzzle Containers */
+        .maze-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+            background: #334155; padding: 8px; border-radius: 1rem;
+        }
+        .maze-cell {
+            width: 40px; height: 40px; background: #1E293B; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+            color: #64748B;
+        }
+        .maze-cell.active { background: #F59E0B; color: white; box-shadow: 0 0 10px #F59E0B; }
+        .maze-arrows { display: flex; gap: 8px; margin-bottom: 10px; background: #0F172A; padding: 8px; border-radius: 8px; border: 1px solid #475569; }
+
+        /* Option Grid: Dynamic Columns */
         .option-grid { 
             display: grid; 
             gap: 8px; 
             width: 100%; 
-            max-width: 320px;
+            max-width: 340px;
             margin-bottom: 0.5rem;
         }
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); } /* Untuk level sulit */
         
         .btn-choice {
             background: white; border: 3px solid #CBD5E1;
             border-radius: 1rem; 
-            aspect-ratio: 1.4; 
+            aspect-ratio: 1.3; 
             display: flex; align-items: center; justify-content: center;
             font-size: 2.2rem; transition: transform 0.1s;
             box-shadow: 0 4px 0 #94A3B8; color: #0F172A; 
-            width: 100%;
+            width: 100%; position: relative;
         }
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 1px 0 #94A3B8; }
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.5; }
+
+        /* Smaller buttons for Grid 3 (6 options) */
+        .grid-3 .btn-choice { font-size: 1.8rem; aspect-ratio: 1.1; }
 
         .menu-btn {
             width: 100%; background: #F59E0B; color: white;
@@ -107,14 +133,9 @@
         }
         .menu-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #B45309; }
 
-        /* Small Home Button in Game HUD */
         .home-icon-btn {
-            background: #334155;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: bold;
-            color: #F59E0B;
+            background: #334155; padding: 6px 10px; border-radius: 8px;
+            font-size: 11px; font-weight: bold; color: #F59E0B;
             border: 1px solid #475569;
         }
     </style>
@@ -125,12 +146,15 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // --- DATABASE GENERATOR (0-100) ---
         const generateDB = () => {
-            const numbers = Array.from({length: 50}, (_, i) => ({ id: `n${i}`, icon: `${i}`, val: i, type: 'number' }));
+            const numbers = Array.from({length: 101}, (_, i) => ({ id: `n${i}`, icon: `${i}`, val: i, type: 'number' }));
             const emojis = [
-                { i: "🐱", t: "animal" }, { i: "🐶", t: "animal" }, { i: "🦁", t: "animal" }, { i: "🍎", t: "food" }, 
-                { i: "🍌", t: "food" }, { i: "🍇", t: "food" }, { i: "🚗", t: "vehicle" }, { i: "🚀", t: "vehicle" }, 
-                { i: "⚽", t: "sport" }, { i: "🏀", t: "sport" }, { i: "🔴", t: "color" }, { i: "🔵", t: "color" }
+                { i: "🐱", t: "animal" }, { i: "🐶", t: "animal" }, { i: "🦁", t: "animal" }, { i: "🐸", t: "animal" }, { i: "🐔", t: "animal" }, { i: "🐵", t: "animal" }, { i: "🐨", t: "animal" },
+                { i: "🍎", t: "food" }, { i: "🍌", t: "food" }, { i: "🍇", t: "food" }, { i: "🍉", t: "food" }, { i: "🍓", t: "food" }, { i: "🍔", t: "food" }, { i: "🍕", t: "food" },
+                { i: "🚗", t: "vehicle" }, { i: "🚀", t: "vehicle" }, { i: "🚌", t: "vehicle" }, { i: "🚓", t: "vehicle" }, { i: "🚜", t: "vehicle" }, { i: "🛴", t: "vehicle" },
+                { i: "⚽", t: "sport" }, { i: "🏀", t: "sport" }, { i: "🎾", t: "sport" }, { i: "🥊", t: "sport" },
+                { i: "🔴", t: "color" }, { i: "🔵", t: "color" }, { i: "🟡", t: "color" }, { i: "🟢", t: "color" }, { i: "🟣", t: "color" }, { i: "🟠", t: "color" }
             ];
             return { numbers, emojis: emojis.map((e, idx) => ({ id: `e${idx}`, icon: e.i, type: e.t })) };
         };
@@ -140,74 +164,168 @@
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_si_kecil_v15_1');
+                const saved = localStorage.getItem('jelajah_v16');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
             const [puzzle, setPuzzle] = useState(null);
             const [feedback, setFeedback] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
+            // --- DIFFICULTY SCALING ---
             const getDifficulty = (level) => {
-                if (level < 5) return { maxNum: 10, types: ['match', 'shadow'], distractors: 1 };
-                if (level < 15) return { maxNum: 20, types: ['match', 'shadow', 'count', 'sudoku'], distractors: 3 };
-                return { maxNum: 50, types: ['sequence', 'odd', 'count', 'sudoku', 'match'], distractors: 3 };
+                if (level < 10) return { maxNum: 10, types: ['match', 'shadow', 'count'], options: 2 };
+                if (level < 25) return { maxNum: 30, types: ['match', 'shadow', 'count', 'sudoku', 'odd'], options: 4 };
+                // Level Master: 6 Pilihan, Angka sampai 100, Ada Maze
+                return { maxNum: 100, types: ['sequence', 'odd', 'count', 'sudoku', 'match', 'maze'], options: 6 };
             };
 
+            // --- MISSION GENERATOR ---
             const generateMission = () => {
                 const diff = getDifficulty(userData.levelIdx);
                 const type = diff.types[Math.floor(Math.random() * diff.types.length)];
+                
                 let target, options = [], meta = {}, instruction = "";
+                
                 const getRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-                const getDist = (arr, id, count) => arr.filter(a => a.id !== id).sort(()=>0.5-Math.random()).slice(0, count);
+                // Fungsi pengambil pengecoh yang pintar (dari tipe yang sama)
+                const getDist = (arr, excludeIds, count) => {
+                    return arr.filter(a => !excludeIds.includes(a.id)).sort(()=>0.5-Math.random()).slice(0, count);
+                };
 
+                // --- 1. MATCH & SHADOW ---
                 if (type === 'match' || type === 'shadow') {
                     const pool = [...DB.emojis, ...DB.numbers.slice(0, diff.maxNum)];
                     target = getRand(pool);
-                    options = [target, ...getDist(pool, target.id, diff.distractors)];
+                    options = [target, ...getDist(pool, [target.id], diff.options - 1)];
                     instruction = type === 'match' ? "Cari yang sama persis!" : "Tebak bayangan siapa?";
-                } else if (type === 'count') {
-                    const num = Math.floor(Math.random() * 3) + 1; 
+                } 
+                
+                // --- 2. COUNTING (Berhitung) ---
+                else if (type === 'count') {
+                    const num = Math.floor(Math.random() * 5) + 1; 
                     const item = getRand(DB.emojis.filter(e => e.type !== 'color'));
                     const iconStr = Array(num).fill(item.icon).join("");
+                    
                     target = { id: 'c_t', val: num }; 
-                    const correctNum = DB.numbers.find(n => n.val === num);
-                    options = [correctNum, ...getDist(DB.numbers.slice(1, 6), `n${num}`, diff.distractors)];
+                    // Cari pengecoh angka yang dekat (misal jawabannya 3, pengecohnya 2, 4, 5)
+                    const correctNumObj = DB.numbers.find(n => n.val === num);
+                    options = [correctNumObj, ...getDist(DB.numbers.slice(1, 10), [`n${num}`], diff.options - 1)];
+                    
                     instruction = "Ada berapa jumlahnya?"; 
                     meta = { isCount: true, display: iconStr }; 
-                } else if (type === 'sequence') {
-                    const a = getRand(DB.emojis); const b = getRand(DB.emojis.filter(e => e.id !== a.id));
-                    target = b; meta = { seq: [a.icon, b.icon, a.icon, "?"] };
-                    options = [b, ...getDist(DB.emojis, b.id, diff.distractors)];
+                } 
+                
+                // --- 3. SEQUENCE (Urutan) ---
+                else if (type === 'sequence') {
+                    if (Math.random() > 0.5) { // Angka
+                        const start = Math.floor(Math.random() * (diff.maxNum - 5));
+                        const step = Math.floor(Math.random() * 2) + 1; // Loncat 1 atau 2
+                        target = DB.numbers.find(n => n.val === start + (step*3));
+                        meta = { seq: [start, start+step, start+(step*2), "?"] };
+                        options = [target, ...getDist(DB.numbers, [target.id, `n${start}`, `n${start+step}`, `n${start+(step*2)}`], diff.options - 1)];
+                    } else { // Gambar
+                        const a = getRand(DB.emojis); const b = getRand(DB.emojis.filter(e => e.id !== a.id));
+                        target = b; meta = { seq: [a.icon, b.icon, a.icon, "?"] };
+                        options = [b, ...getDist(DB.emojis, [b.id, a.id], diff.options - 1)];
+                    }
                     instruction = "Apa urutan selanjutnya?";
-                } else if (type === 'odd') {
-                    const pool = DB.emojis.filter(e => e.type === 'animal');
-                    const common = getRand(pool); const odd = getRand(pool.filter(e => e.id !== common.id));
-                    target = odd; options = [common, common, common, odd]; 
+                } 
+                
+                // --- 4. ODD ONE OUT (Cari Beda - FIX) ---
+                else if (type === 'odd') {
+                    // Ambil 1 kategori
+                    const cat = getRand(['animal', 'food', 'vehicle', 'sport']);
+                    const pool = DB.emojis.filter(e => e.type === cat);
+                    
+                    const common = getRand(pool);
+                    const odd = getRand(pool.filter(e => e.id !== common.id)); // Pastikan beda
+                    
+                    target = odd;
+                    // Buat array isi common semua, lalu selipkan 1 odd
+                    options = Array(diff.options - 1).fill(common);
+                    options.push(odd);
+                    
                     instruction = "Mana yang paling beda?";
-                } else if (type === 'sudoku') {
+                } 
+                
+                // --- 5. SUDOKU (Logika Warna - FIX) ---
+                else if (type === 'sudoku') {
                     const colors = DB.emojis.filter(e => e.type === 'color').sort(()=>0.5-Math.random());
-                    target = colors[1]; meta = { grid: [colors[0].icon, colors[1].icon, colors[1].icon, "?"] };
-                    options = [colors[0], colors[1]]; instruction = "Warna kotak tidak boleh sama!";
+                    const c1 = colors[0]; const c2 = colors[1];
+                    target = c2; 
+                    meta = { grid: [c1.icon, c2.icon, c2.icon, "?"] };
+                    
+                    // Pengecoh harus warna lain, atau minimal bukan c2
+                    const dists = getDist(DB.emojis.filter(e => e.type === 'color'), [c2.id], diff.options - 1);
+                    options = [c2, ...dists];
+                    
+                    instruction = "Warna kotak tidak boleh sama!";
                 }
+
+                // --- 6. MAZE (Labirin Arah - NEW) ---
+                else if (type === 'maze') {
+                    // Logic: 3x3 Grid. Start (0,0). Arrows guide to target.
+                    // 0 1 2
+                    // 3 4 5
+                    // 6 7 8
+                    const startPos = 0;
+                    const moves = [['➡️', 1], ['⬇️', 3], ['↘️', 4]]; // Simple vectors
+                    
+                    // Generate random path 2 steps
+                    let pos = 0; // Top-Left
+                    let pathIcons = [];
+                    
+                    // Step 1: Kanan atau Bawah
+                    if (Math.random() > 0.5) { pos += 1; pathIcons.push("➡️"); } 
+                    else { pos += 3; pathIcons.push("⬇️"); }
+
+                    // Step 2: Tergantung posisi
+                    if (pos === 1) { // di tengah atas
+                        if (Math.random() > 0.5) { pos += 1; pathIcons.push("➡️"); }
+                        else { pos += 3; pathIcons.push("⬇️"); }
+                    } else if (pos === 3) { // di kiri tengah
+                        if (Math.random() > 0.5) { pos += 1; pathIcons.push("➡️"); }
+                        else { pos += 3; pathIcons.push("⬇️"); }
+                    } else { // di tengah (4)
+                        pos += 1; pathIcons.push("➡️");
+                    }
+                    
+                    // Target is where we ended up (pos)
+                    // Map pos index to Emoji Letter (A-I)
+                    const mapLabels = ["A","B","C","D","E","F","G","H","I"];
+                    target = { id: `pos_${pos}`, icon: mapLabels[pos], isPos: true };
+                    
+                    // Options are other letters
+                    const wrongIndices = [0,1,2,3,4,5,6,7,8].filter(i => i !== pos).sort(()=>0.5-Math.random()).slice(0, diff.options - 1);
+                    const wrongOptions = wrongIndices.map(i => ({ id: `pos_${i}`, icon: mapLabels[i], isPos: true }));
+                    
+                    options = [target, ...wrongOptions];
+                    instruction = "Ikuti panah! Kemana sampainya?";
+                    meta = { isMaze: true, arrows: pathIcons, labels: mapLabels };
+                }
+
                 setPuzzle({ type, target, options: options.sort(()=>0.5-Math.random()), meta, instruction });
             };
 
+            // --- SYSTEM REGEN ---
             useEffect(() => {
                 const timer = setInterval(() => {
                     if (userData.lives < 3 && userData.lastLifeLost) {
                         const diff = Date.now() - userData.lastLifeLost;
-                        if (diff >= 600000) setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1 < 3 ? Date.now() : null }));
+                        if (diff >= 600000) setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1<3?Date.now():null }));
                         else setRegenTimer(`${Math.floor((600000-diff)/60000)}:${Math.floor(((600000-diff)%60000)/1000).toString().padStart(2,'0')}`);
                     } else setRegenTimer("");
                 }, 1000);
                 return () => clearInterval(timer);
             }, [userData]);
 
-            useEffect(() => { localStorage.setItem('jelajah_si_kecil_v15_1', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_v16', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
                 if (feedback) return;
-                if (opt.id === puzzle.target.id || opt.val === puzzle.target.val) {
+                const isCorrect = opt.id === puzzle.target.id || opt.val === puzzle.target.val;
+                
+                if (isCorrect) {
                     setFeedback('correct');
                     setTimeout(() => {
                         setUserData(p => ({ ...p, score: p.score+10, levelIdx: p.levelIdx+1, streak: p.streak+1 }));
@@ -220,25 +338,14 @@
                 }
             };
 
+            // --- RENDER ---
             if (screen === 'menu') return (
                 <div className="app-container p-6 justify-center items-center text-center">
                     <div className="text-7xl mb-4">🧩</div>
                     <h1 className="text-3xl font-black text-white mb-2 uppercase">Jelajah Si Kecil</h1>
-                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Cerdas v15.1</p>
-                    
-                    <button onClick={() => { 
-                        setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); 
-                        setScreen('game'); 
-                        setTimeout(generateMission, 50); 
-                    }} className="menu-btn">MULAI BARU</button>
-                    
-                    <button onClick={() => { 
-                        setScreen('game'); 
-                        setTimeout(generateMission, 50); 
-                    }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>
-                        LANJUTKAN - Level {userData.levelIdx + 1}
-                    </button>
-                    
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Master v16.0</p>
+                    <button onClick={() => { setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); setScreen('game'); setTimeout(generateMission, 50); }} className="menu-btn">MULAI BARU</button>
+                    <button onClick={() => { setScreen('game'); setTimeout(generateMission, 50); }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>LANJUTKAN (Lv {userData.levelIdx+1})</button>
                     <div className="text-slate-500 text-xs mt-4">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                 </div>
             );
@@ -246,7 +353,7 @@
             if (screen === 'result') return (
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-7xl mb-4">🌟</div>
-                    <h2 className="text-2xl font-bold text-white mb-6">Pintar Sekali!</h2>
+                    <h2 className="text-2xl font-bold text-white mb-6">Hebat Sekali!</h2>
                     <button onClick={() => { setScreen('game'); generateMission(); }} className="menu-btn bg-green-600">LANJUT</button>
                     <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold mt-2 uppercase text-xs">Ke Menu Utama</button>
                 </div>
@@ -255,48 +362,41 @@
             return (
                 <div className="app-container">
                     <div className="hud-bar">
-                        <div className="flex flex-col items-center">
-                            <span className="text-xl">❤️ {userData.lives}</span>
-                            <span className="text-[8px] text-amber-500 font-bold">{regenTimer}</span>
-                        </div>
-                        
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Level {userData.levelIdx + 1}</span>
-                            <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
-                        </div>
-
-                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow-sm">
-                            ⭐ {userData.score}
-                        </div>
+                        <div className="flex flex-col items-center"><span className="text-xl">❤️ {userData.lives}</span><span className="text-[9px] text-amber-500">{regenTimer}</span></div>
+                        <div className="flex flex-col items-center"><span className="text-[10px] text-slate-400 font-bold uppercase">Level {userData.levelIdx + 1}</span><button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button></div>
+                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm">⭐ {userData.score}</div>
                     </div>
-
                     <div className="game-area">
                         {userData.lives <= 0 ? (
-                            <div className="text-center">
-                                <h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2>
-                                <button onClick={() => setScreen('menu')} className="menu-btn">Kembali ke Menu</button>
-                            </div>
+                            <div className="text-center"><h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2><button onClick={() => setScreen('menu')} className="menu-btn">Kembali</button></div>
                         ) : puzzle ? (
                             <>
                                 <h2 className="instruction-text">{puzzle.instruction}</h2>
-                                <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                
+                                <div className="target-wrapper">
                                     {puzzle.type === 'sudoku' ? (
-                                        <div className="grid grid-cols-2 gap-2 bg-amber-500 p-2 rounded-xl">
-                                            {puzzle.meta.grid.map((c,i)=><div key={i} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl">{c}</div>)}
-                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 bg-amber-500 p-2 rounded-xl">{puzzle.meta.grid.map((c,i)=><div key={i} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl">{c}</div>)}</div>
                                     ) : puzzle.type === 'sequence' ? (
-                                        <div className="flex gap-2 bg-slate-800 p-3 rounded-xl border border-slate-600">
-                                            {puzzle.meta.seq.map((c,i)=><div key={i} className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-xl text-white">{c}</div>)}
-                                        </div>
+                                        <div className="flex gap-2 bg-slate-800 p-3 rounded-xl border border-slate-600">{puzzle.meta.seq.map((c,i)=><div key={i} className={`w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-xl text-white ${c==="?"?"text-amber-400 animate-pulse":""}`}>{c}</div>)}</div>
                                     ) : puzzle.meta?.isCount ? (
-                                        <div className="target-display solid text-3xl">{puzzle.meta.display}</div>
+                                        <div className="target-display solid text-3xl text-center px-2">{puzzle.meta.display}</div>
+                                    ) : puzzle.meta?.isMaze ? (
+                                        <div className="flex flex-col items-center">
+                                            <div className="maze-arrows text-2xl">{puzzle.meta.arrows.join(" ")}</div>
+                                            <div className="maze-grid">
+                                                {puzzle.meta.labels.map((l,i) => <div key={i} className={`maze-cell ${i===0?'active':''}`}>{i===0?'🐱':l}</div>)}
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <div className={`target-display ${puzzle.type==='match'?'solid':''}`}>
+                                        // LOGIC FIX: HILANGKAN TARGET JIKA 'ODD ONE OUT'
+                                        <div className={`target-display ${puzzle.type==='match'?'solid':''} ${puzzle.type==='odd'?'hidden-target':''}`}>
                                             {puzzle.type === 'shadow' ? <span className="grayscale brightness-0 opacity-10">{puzzle.target.icon}</span> : <span>{puzzle.target.icon}</span>}
                                         </div>
                                     )}
                                 </div>
-                                <div className={`option-grid grid-2`}>
+
+                                {/* Dynamic Grid: 2 columns or 3 columns based on options count */}
+                                <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-3' : 'grid-2'}`}>
                                     {puzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
                                             className={`btn-choice ${feedback==='correct' && (opt.id===puzzle.target.id || opt.val===puzzle.target.val) ? 'correct' : ''} ${feedback==='wrong' && opt.id!==puzzle.target.id ? 'wrong' : ''}`}>
