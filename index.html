@@ -43,13 +43,13 @@
 
         .game-area {
             flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: flex-start; /* Ubah ke top agar maze muat */
-            padding: 1rem; width: 100%; overflow-y: auto; /* Allow scroll if maze is huge */
+            align-items: center; justify-content: flex-start;
+            padding: 1rem; width: 100%; overflow-y: auto;
         }
 
         .instruction-text {
-            font-size: 1.2rem; font-weight: 700; color: #F1F5F9;
-            margin-bottom: 1rem; text-align: center;
+            font-size: 1.1rem; font-weight: 700; color: #F1F5F9;
+            margin-bottom: 0.5rem; text-align: center;
         }
 
         /* MAZE STYLES */
@@ -59,10 +59,10 @@
         }
 
         .maze-arrows-box { 
-            background: #334155; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px;
-            font-size: 1.8rem; border: 2px solid #64748b; color: #F59E0B;
-            box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.5rem; text-align: center;
-            max-width: 90%; flex-wrap: wrap; display: flex; justify-content: center;
+            background: #334155; padding: 8px 12px; border-radius: 12px; margin-bottom: 15px;
+            font-size: 1.6rem; border: 2px solid #64748b; color: #F59E0B;
+            box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.3rem; text-align: center;
+            max-width: 95%; flex-wrap: wrap; display: flex; justify-content: center; gap: 5px;
         }
 
         .maze-grid {
@@ -75,16 +75,17 @@
             width: 45px; height: 45px; background: #0F172A; border-radius: 8px;
             display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
             color: #64748B; font-weight: bold; border: 1px solid #334155;
-            transition: all 0.2s;
+            transition: all 0.2s; position: relative;
         }
         
-        /* Ukuran cell mengecil jika grid membesar */
         .grid-4x4 .maze-cell { width: 40px; height: 40px; font-size: 1.2rem; }
         .grid-5x5 .maze-cell { width: 34px; height: 34px; font-size: 1rem; }
 
+        /* Style Kucing (Start) */
         .maze-cell.start { 
             background: #F59E0B; color: white; border-color: #B45309; 
             box-shadow: inset 0 0 10px rgba(0,0,0,0.2); 
+            z-index: 10;
         }
 
         /* Option Grid */
@@ -102,7 +103,6 @@
         }
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 1px 0 #94A3B8; }
         
-        /* Feedback States */
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
         
@@ -130,7 +130,7 @@
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_maze_v19');
+                const saved = localStorage.getItem('jelajah_maze_v20');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
             const [puzzle, setPuzzle] = useState(null);
@@ -138,60 +138,55 @@
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
-            // --- DIFFICULTY LOGIC (Hanya Maze) ---
+            // --- DIFFICULTY LOGIC ---
             const getDifficulty = (level) => {
-                // Level 0-4: Grid 3x3, 2 Langkah (Sangat Mudah)
+                // Level 0-4: Grid 3x3, 2 Langkah
                 if (level < 5) return { gridSize: 3, steps: 2, options: 2 };
-                // Level 5-9: Grid 3x3, 3 Langkah (Mudah)
+                // Level 5-9: Grid 3x3, 3 Langkah
                 if (level < 10) return { gridSize: 3, steps: 3, options: 3 };
-                // Level 10-19: Grid 4x4, 3-4 Langkah (Sedang)
+                // Level 10-19: Grid 4x4, 3-4 Langkah
                 if (level < 20) return { gridSize: 4, steps: Math.random() > 0.5 ? 3 : 4, options: 4 };
-                // Level 20-29: Grid 4x4, 4-5 Langkah (Menantang)
-                if (level < 30) return { gridSize: 4, steps: Math.floor(Math.random() * 2) + 4, options: 4 };
-                // Level 30+: Grid 5x5, 5-7 Langkah (Master)
-                return { gridSize: 5, steps: Math.floor(Math.random() * 3) + 5, options: 6 };
+                // Level 20-29: Grid 4x4, 4-6 Langkah
+                if (level < 30) return { gridSize: 4, steps: Math.floor(Math.random() * 3) + 4, options: 4 };
+                // Level 30+: Grid 5x5, 5-8 Langkah
+                return { gridSize: 5, steps: Math.floor(Math.random() * 4) + 5, options: 6 };
             };
 
             const generateMaze = () => {
                 const diff = getDifficulty(userData.levelIdx);
                 const size = diff.gridSize;
                 const totalCells = size * size;
-                
-                // Labels: A, B, C... sampai Y (25 huruf)
                 const labels = "ABCDEFGHIJKLMNOPQRSTUVWXY".split("").slice(0, totalCells);
                 
-                // Logic Pathfinding
-                // Start selalu di 0 (Pojok Kiri Atas) untuk konsistensi anak-anak
-                // Atau bisa diacak di masa depan, tapi sekarang kita kunci di 0 biar ga bingung
-                let currentPos = 0;
-                let pathHistory = [0]; // Simpan jejak agar tidak bolak balik instan
+                // 1. Random Start Position
+                const startPos = Math.floor(Math.random() * totalCells);
+                
+                let currentPos = startPos;
+                let pathHistory = [startPos]; 
                 let arrowSequence = [];
 
                 for (let i = 0; i < diff.steps; i++) {
                     let possibleMoves = [];
 
-                    // Cek Kanan
+                    // Cek batas tembok untuk setiap arah
+                    // Kanan
                     if ((currentPos + 1) % size !== 0) {
-                        if (pathHistory[pathHistory.length-2] !== currentPos + 1) // Cegah balik langsung
-                            possibleMoves.push({ move: 1, icon: '➡️' });
+                        if (pathHistory[pathHistory.length-2] !== currentPos + 1) possibleMoves.push({ move: 1, icon: '➡️' });
                     }
-                    // Cek Bawah
+                    // Bawah
                     if (currentPos + size < totalCells) {
-                        if (pathHistory[pathHistory.length-2] !== currentPos + size)
-                            possibleMoves.push({ move: size, icon: '⬇️' });
+                        if (pathHistory[pathHistory.length-2] !== currentPos + size) possibleMoves.push({ move: size, icon: '⬇️' });
                     }
-                    // Cek Kiri (Hanya jika grid > 3 atau level tinggi biar variatif)
-                    if (currentPos % size !== 0 && userData.levelIdx > 10) {
-                         if (pathHistory[pathHistory.length-2] !== currentPos - 1)
-                            possibleMoves.push({ move: -1, icon: '⬅️' });
+                    // Kiri
+                    if (currentPos % size !== 0) {
+                        if (pathHistory[pathHistory.length-2] !== currentPos - 1) possibleMoves.push({ move: -1, icon: '⬅️' });
                     }
-                    // Cek Atas
-                    if (currentPos - size >= 0 && userData.levelIdx > 10) {
-                         if (pathHistory[pathHistory.length-2] !== currentPos - size)
-                            possibleMoves.push({ move: -size, icon: '⬆️' });
+                    // Atas
+                    if (currentPos - size >= 0) {
+                        if (pathHistory[pathHistory.length-2] !== currentPos - size) possibleMoves.push({ move: -size, icon: '⬆️' });
                     }
 
-                    // Jika terjebak (jarang terjadi di grid open), ambil sembarang valid
+                    // Jika terjebak (dead end), berhenti di situ
                     if (possibleMoves.length === 0) break;
 
                     const selected = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
@@ -203,10 +198,9 @@
                 const targetIndex = currentPos;
                 const targetLabel = labels[targetIndex];
 
-                // Generate Options
+                // Options Generation
                 const targetOption = { id: `pos_${targetIndex}`, icon: targetLabel, isTarget: true };
                 
-                // Distractors: Ambil huruf lain selain target
                 const otherIndices = Array.from({length: totalCells}, (_, i) => i).filter(i => i !== targetIndex);
                 const randomWrong = otherIndices.sort(() => 0.5 - Math.random()).slice(0, diff.options - 1);
                 
@@ -224,7 +218,7 @@
                     arrows: arrowSequence,
                     options: finalOptions,
                     targetId: targetOption.id,
-                    startIndex: 0 // Start position
+                    startIndex: startPos // Start Posisi Random
                 });
             };
 
@@ -240,7 +234,7 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            useEffect(() => { localStorage.setItem('jelajah_maze_v19', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_maze_v20', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
                 if (feedback === 'correct') return;
@@ -263,7 +257,7 @@
                 <div className="app-container p-6 justify-center items-center text-center">
                     <div className="text-7xl mb-4">🧭</div>
                     <h1 className="text-3xl font-black text-white mb-2 uppercase">Labirin Si Kecil</h1>
-                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Fokus Panah v19.0</p>
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Acak v20.0</p>
                     <button onClick={() => { setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); setScreen('game'); setTimeout(generateMaze, 50); }} className="menu-btn">MULAI BARU</button>
                     <button onClick={() => { setScreen('game'); setTimeout(generateMaze, 50); }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>LANJUTKAN (Lv {userData.levelIdx+1})</button>
                     <div className="text-slate-500 text-xs mt-4">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
@@ -291,7 +285,7 @@
                             <div className="text-center mt-20"><h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2><button onClick={() => setScreen('menu')} className="menu-btn">Kembali</button></div>
                         ) : puzzle ? (
                             <div className="maze-container w-full h-full">
-                                <h2 className="instruction-text">Ikuti panah! Kemana sampainya?</h2>
+                                <h2 className="instruction-text">Ikuti panah! Dimana Kucing sekarang?</h2>
                                 
                                 <div className="maze-arrows-box">
                                     {puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}
