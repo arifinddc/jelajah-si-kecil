@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Akademi Sage: Phi Brain Junior</title>
+    <title>Akademi Sage: Phi Brain Master</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -24,7 +24,6 @@
 
         #root { height: 100%; width: 100%; }
 
-        /* Container Utama */
         .app-container {
             position: absolute; inset: 0;
             display: flex; flex-direction: column;
@@ -34,54 +33,63 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
 
-        /* Menu Styles */
+        /* HUD & Menu */
+        .hud-bar {
+            height: 70px; flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 1rem; background: rgba(15, 23, 42, 0.95);
+            border-bottom: 3px solid #F59E0B; z-index: 20;
+        }
+
         .menu-btn {
             width: 100%; background: #F59E0B; color: white;
-            padding: 1.2rem; margin-bottom: 1rem;
-            border-radius: 1.5rem; font-size: 1.5rem; font-weight: bold;
-            box-shadow: 0 6px 0 #B45309; transition: all 0.1s;
+            padding: 1rem; margin-bottom: 0.8rem;
+            border-radius: 1rem; font-size: 1.2rem; font-weight: bold;
+            box-shadow: 0 4px 0 #B45309; transition: all 0.1s;
         }
-        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #B45309; }
-        .menu-btn.disabled { background: #475569; box-shadow: none; opacity: 0.5; pointer-events: none; }
+        .menu-btn:active { transform: translateY(4px); box-shadow: none; }
+        .menu-btn.secondary { background: #334155; box-shadow: 0 4px 0 #1e293b; }
 
-        /* HUD Styles */
-        .hud-bar {
-            height: 80px; flex-shrink: 0;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 1.5rem; background: rgba(15, 23, 42, 0.9);
-            border-bottom: 3px solid #F59E0B; z-index: 10;
+        /* Game Elements */
+        .game-area {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 1rem; width: 100%; position: relative;
         }
 
-        /* Puzzle Elements */
-        .target-box {
-            width: 150px; height: 150px;
-            background: #1e293b; border: 4px dashed #94a3b8; border-radius: 2rem;
+        /* Target Display */
+        .target-display {
+            width: 140px; height: 140px;
+            background: #1e293b; border: 4px dashed #64748b; border-radius: 2rem;
             display: flex; align-items: center; justify-content: center;
-            margin-bottom: 1.5rem; font-size: 5rem;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            font-size: 5rem; margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
         }
-        .target-box.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
-
-        /* Grid Logic */
-        .grid-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #F59E0B; padding: 10px; border-radius: 1rem; }
-        .grid-cell { width: 70px; height: 70px; background: #334155; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-
-        .sequence-row { display: flex; gap: 10px; background: #334155; padding: 15px; border-radius: 1.5rem; margin-bottom: 2rem; border: 2px solid #475569; }
+        .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
         
-        .option-grid { display: grid; gap: 12px; width: 100%; max-width: 380px; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+        /* Grid System */
+        .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        
         .btn-choice {
             background: white; border: 4px solid #CBD5E1;
-            border-radius: 1.5rem; aspect-ratio: 1;
+            border-radius: 1.2rem; aspect-ratio: 1;
             display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; transition: transform 0.1s;
-            box-shadow: 0 6px 0 #94A3B8; color: #0F172A;
+            font-size: 3rem; transition: transform 0.1s;
+            box-shadow: 0 5px 0 #94A3B8; color: #0F172A; position: relative;
         }
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 2px 0 #94A3B8; }
-        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 6px 0 #166534; }
-        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 6px 0 #991B1B; }
+        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 5px 0 #166534; }
+        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 5px 0 #991B1B; opacity: 0.5; }
 
-        /* Modal */
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* Special Puzzles */
+        .sequence-row { display: flex; gap: 8px; background: #334155; padding: 10px; border-radius: 1rem; margin-bottom: 1.5rem; border: 2px solid #475569; }
+        .seq-item { width: 50px; height: 50px; background: #1e293b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+        
+        .sudoku-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #F59E0B; padding: 8px; border-radius: 1rem; margin-bottom: 1.5rem; }
+        .sudoku-cell { width: 60px; height: 60px; background: #334155; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
 
         button { -webkit-tap-highlight-color: transparent; }
     </style>
@@ -90,296 +98,234 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
-        // --- DATABASE ---
-        const ASSETS = {
-            letters: [
-                { id: "la", icon: "🅰️" }, { id: "lb", icon: "🅱️" }, { id: "lc", icon: "🅲" }, 
-                { id: "ld", icon: "🅳" }, { id: "le", icon: "🅴" }
-            ],
-            numbers: [
-                { id: "n1", icon: "1️⃣", val: 1 }, { id: "n2", icon: "2️⃣", val: 2 }, 
-                { id: "n3", icon: "3️⃣", val: 3 }, { id: "n4", icon: "4️⃣", val: 4 }
-            ],
-            misc: [
-                { id: "a1", icon: "🐱", name: "Kucing", sound: "Meong" },
-                { id: "a2", icon: "🐶", name: "Anjing", sound: "Guk Guk" },
-                { id: "f1", icon: "🍎", name: "Apel", color: "merah", type: "food" },
-                { id: "f2", icon: "🍌", name: "Pisang", color: "kuning", type: "food" },
-                { id: "c1", icon: "🔴", color: "merah", type: "color" }, 
-                { id: "c2", icon: "🔵", color: "biru", type: "color" },
-                { id: "c3", icon: "🟡", color: "kuning", type: "color" }
-            ]
+        // --- 1. GENERATOR DATABASE MASIF (Procedural Generation) ---
+        const generateDatabase = () => {
+            const numbers = Array.from({length: 50}, (_, i) => ({ id: `n${i}`, icon: `${i}`, val: i, type: 'number' }));
+            
+            const emojis = [
+                { i: "🐱", t: "animal" }, { i: "🐶", t: "animal" }, { i: "🦁", t: "animal" }, { i: "🐯", t: "animal" }, { i: "🐮", t: "animal" }, { i: "🐷", t: "animal" }, { i: "🐸", t: "animal" }, { i: "🐵", t: "animal" }, { i: "🐔", t: "animal" }, { i: "🐧", t: "animal" },
+                { i: "🍎", t: "food" }, { i: "🍌", t: "food" }, { i: "🍇", t: "food" }, { i: "🍉", t: "food" }, { i: "🍓", t: "food" }, { i: "🍒", t: "food" }, { i: "🍍", t: "food" }, { i: "🥥", t: "food" }, { i: "🥝", t: "food" }, { i: "🥑", t: "food" },
+                { i: "🚗", t: "vehicle" }, { i: "🚕", t: "vehicle" }, { i: "🚙", t: "vehicle" }, { i: "🚌", t: "vehicle" }, { i: "🚓", t: "vehicle" }, { i: "🚑", t: "vehicle" }, { i: "🚒", t: "vehicle" }, { i: "🚜", t: "vehicle" }, { i: "🚲", t: "vehicle" }, { i: "🚀", t: "vehicle" },
+                { i: "⚽", t: "sport" }, { i: "🏀", t: "sport" }, { i: "🏈", t: "sport" }, { i: "⚾", t: "sport" }, { i: "🎾", t: "sport" }, { i: "🏐", t: "sport" }, { i: "🏉", t: "sport" }, { i: "🎱", t: "sport" },
+                { i: "⌚", t: "object" }, { i: "📱", t: "object" }, { i: "💻", t: "object" }, { i: "📷", t: "object" }, { i: "📺", t: "object" }, { i: "💡", t: "object" }, { i: "🔦", t: "object" }, { i: "💎", t: "object" },
+                { i: "🔴", t: "color" }, { i: "🔵", t: "color" }, { i: "🟡", t: "color" }, { i: "🟢", t: "color" }, { i: "🟣", t: "color" }, { i: "🟠", t: "color" }, { i: "⚫", t: "color" }, { i: "⚪", t: "color" }
+            ];
+
+            const formattedEmojis = emojis.map((e, idx) => ({ id: `e${idx}`, icon: e.i, type: e.t }));
+
+            return { numbers, emojis: formattedEmojis };
         };
 
-        const SCHEMAS = [
-            "phi_matching", // Cari Sama (Fixed)
-            "phi_shadow",   // Bayangan
-            "phi_sequence", // Urutan (New)
-            "phi_odd",      // Cari Beda (New)
-            "phi_sudoku",   // Logika Warna
-            "phi_counting"  // Berhitung
-        ];
+        const DB = generateDatabase();
 
         const App = () => {
-            const [screen, setScreen] = useState('menu'); // menu, game, result
-            const [gameState, setGameState] = useState('idle');
-            
+            const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('phi_sage_v13');
+                const saved = localStorage.getItem('phi_sage_v14');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
 
-            const [currentPuzzle, setCurrentPuzzle] = useState(null);
+            const [puzzle, setPuzzle] = useState(null);
             const [feedback, setFeedback] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
-            // --- SYSTEM: Life Regen ---
+            // --- DIFFICULTY CONTROLLER ---
+            const getDifficulty = (level) => {
+                // Level 1-5: Intro (Angka 0-10, Objek simpel)
+                if (level < 5) return { maxNum: 10, types: ['match', 'shadow'], distractors: 1 };
+                // Level 6-15: Basic (Angka 0-20, Counting, Sudoku)
+                if (level < 15) return { maxNum: 20, types: ['match', 'shadow', 'count', 'sudoku'], distractors: 3 };
+                // Level 16-30: Intermediate (Sequence, Odd One Out)
+                if (level < 30) return { maxNum: 50, types: ['sequence', 'odd', 'count', 'sudoku'], distractors: 3 };
+                // Level 30+: Master (Semua tipe, Angka besar)
+                return { maxNum: 50, types: ['sequence', 'odd', 'count', 'sudoku', 'match'], distractors: 3 };
+            };
+
+            // --- GAME LOGIC GENERATOR ---
+            const generateMission = () => {
+                const diff = getDifficulty(userData.levelIdx);
+                const type = diff.types[Math.floor(Math.random() * diff.types.length)];
+                
+                let target, options = [], meta = {}, instruction = "";
+                
+                // Helper: Ambil random item
+                const getRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                const getDistractors = (arr, correctId, count) => arr.filter(a => a.id !== correctId).sort(()=>0.5-Math.random()).slice(0, count);
+
+                if (type === 'match' || type === 'shadow') {
+                    // Cari Sama / Bayangan
+                    const pool = [...DB.emojis, ...DB.numbers.slice(0, diff.maxNum)];
+                    target = getRand(pool);
+                    options = [target, ...getDistractors(pool, target.id, diff.distractors)];
+                    instruction = type === 'match' ? "Cari yang sama persis!" : "Tebak bayangan siapa?";
+                }
+                else if (type === 'count') {
+                    // Berhitung
+                    const num = Math.floor(Math.random() * (diff.maxNum > 10 ? 5 : 3)) + 1; // Count max 5 items for display
+                    const item = getRand(DB.emojis.filter(e => e.type !== 'color'));
+                    const iconStr = Array(num).fill(item.icon).join(" ");
+                    
+                    target = { id: 'c_true', icon: iconStr, val: num }; // Visual representation
+                    // Options are numbers
+                    const correctNum = DB.numbers.find(n => n.val === num);
+                    options = [correctNum, ...getDistractors(DB.numbers.slice(1, 10), `n${num}`, diff.distractors)];
+                    instruction = "Ada berapa jumlahnya?";
+                    meta = { isCounting: true, display: iconStr }; // Special flag
+                }
+                else if (type === 'sequence') {
+                    // Pola Angka atau Benda
+                    if (Math.random() > 0.5) {
+                        // Angka: 1 2 3 ?
+                        const start = Math.floor(Math.random() * (diff.maxNum - 3));
+                        target = DB.numbers.find(n => n.val === start + 3);
+                        meta = { seq: [start, start+1, start+2, "?"] };
+                        options = [target, ...getDistractors(DB.numbers, target.id, diff.distractors)];
+                    } else {
+                        // Pola: A B A ?
+                        const a = getRand(DB.emojis);
+                        const b = getRand(DB.emojis.filter(e => e.id !== a.id));
+                        target = b;
+                        meta = { seq: [a.icon, b.icon, a.icon, "?"] };
+                        options = [b, ...getDistractors(DB.emojis, b.id, diff.distractors)];
+                    }
+                    instruction = "Apa urutan selanjutnya?";
+                }
+                else if (type === 'odd') {
+                    // Cari yang beda: 3 Kucing, 1 Anjing
+                    const cat = getRand(['animal', 'food', 'vehicle', 'sport']);
+                    const pool = DB.emojis.filter(e => e.type === cat);
+                    
+                    const common = getRand(pool);
+                    const odd = getRand(pool.filter(e => e.id !== common.id));
+                    
+                    target = odd;
+                    options = [common, common, common, odd]; 
+                    instruction = "Mana yang paling beda?";
+                }
+                else if (type === 'sudoku') {
+                    // Sudoku 2x2 Warna/Benda
+                    const pool = DB.emojis.filter(e => e.type === 'color').sort(()=>0.5-Math.random()).slice(0, 2);
+                    const a = pool[0]; const b = pool[1];
+                    target = b;
+                    meta = { grid: [a.icon, b.icon, b.icon, "?"] };
+                    options = [a, b];
+                    instruction = "Warna kotak tidak boleh sama!";
+                }
+
+                setPuzzle({ type, target, options: options.sort(()=>0.5-Math.random()), meta, instruction });
+            };
+
+            // --- SYSTEM ---
             useEffect(() => {
                 const timer = setInterval(() => {
                     if (userData.lives < 3 && userData.lastLifeLost) {
                         const diff = Date.now() - userData.lastLifeLost;
-                        if (diff >= 600000) { // 10 Menit
-                            setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1 < 3 ? Date.now() : null }));
-                        } else {
+                        if (diff >= 600000) setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1<3?Date.now():null }));
+                        else {
                             const rem = 600000 - diff;
                             setRegenTimer(`${Math.floor(rem/60000)}:${Math.floor((rem%60000)/1000).toString().padStart(2,'0')}`);
                         }
                     } else setRegenTimer("");
                 }, 1000);
                 return () => clearInterval(timer);
-            }, [userData.lives, userData.lastLifeLost]);
+            }, [userData]);
 
-            useEffect(() => { localStorage.setItem('phi_sage_v13', JSON.stringify(userData)); }, [userData]);
-
-            // --- AUDIO ---
-            const speak = (txt) => {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const u = new SpeechSynthesisUtterance(txt);
-                    u.lang = 'id-ID'; u.rate = 0.9;
-                    window.speechSynthesis.speak(u);
-                }
-            };
-            
-            const playTone = (type) => {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    if (type === 'correct') osc.frequency.setValueAtTime(880, ctx.currentTime);
-                    else osc.frequency.setValueAtTime(220, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.2);
-                } catch(e) {}
-            };
-
-            // --- MENU FUNCTIONS ---
-            const startNewGame = () => {
-                setUserData({ score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null });
-                setScreen('game');
-                setTimeout(nextMisi, 100);
-            };
-
-            const continueGame = () => {
-                setScreen('game');
-                setTimeout(nextMisi, 100);
-            };
-
-            // --- GAME LOGIC ---
-            const nextMisi = () => {
-                if (userData.lives <= 0) return; // Prevent play if no lives
-                
-                // Randomly pick schema
-                const type = SCHEMAS[Math.floor(Math.random() * SCHEMAS.length)];
-                let target, options = [], meta = {}, instruction = "";
-                const pool = [...ASSETS.misc, ...ASSETS.numbers, ...ASSETS.letters];
-
-                if (type === "phi_matching") {
-                    target = pool[Math.floor(Math.random() * pool.length)];
-                    const distractors = pool.filter(a => a.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 1);
-                    options = [target, ...distractors];
-                    instruction = "Cari yang sama persis!";
-                }
-                else if (type === "phi_shadow") {
-                    target = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
-                    const distractors = ASSETS.misc.filter(a => a.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 1);
-                    options = [target, ...distractors];
-                    instruction = "Tebak bayangan siapa ini?";
-                }
-                else if (type === "phi_sequence") {
-                    // Logic: A B A ?
-                    const a = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
-                    const b = ASSETS.misc.filter(i => i.id !== a.id)[0];
-                    meta = { sequence: [a.icon, b.icon, a.icon, "?"] };
-                    target = b;
-                    options = [a, b];
-                    instruction = "Apa urutan selanjutnya?";
-                }
-                else if (type === "phi_odd") {
-                    // Logic: 3 Same, 1 Different
-                    const common = ASSETS.misc[Math.floor(Math.random() * ASSETS.misc.length)];
-                    const odd = ASSETS.misc.filter(i => i.id !== common.id)[0];
-                    options = [common, common, odd, common]; // 3 Common, 1 Odd
-                    target = odd; // The target is the unique one
-                    instruction = "Cari satu yang berbeda!";
-                }
-                else if (type === "phi_counting") {
-                    const count = Math.floor(Math.random() * 3) + 1; 
-                    const item = ASSETS.misc.find(a => a.type === 'food');
-                    target = { id: "correct", icon: Array(count).fill(item.icon).join("") };
-                    options = [target, { id: "wrong", icon: Array(count + 1).fill(item.icon).join("") }];
-                    instruction = `Ketuk kotak dengan ${count} benda!`;
-                }
-                else if (type === "phi_sudoku") {
-                    const c = ASSETS.misc.filter(a => a.type === "color").sort(() => 0.5 - Math.random());
-                    target = c[0];
-                    meta = { grid: [c[0].icon, c[1].icon, c[1].icon, "?"] };
-                    options = [c[0], c[1]];
-                    instruction = "Warna kotak tidak boleh sama!";
-                }
-
-                setCurrentPuzzle({ type, target, options: options.sort(() => 0.5 - Math.random()), meta, instruction });
-                setGameState('playing');
-                speak(instruction);
-            };
+            useEffect(() => { localStorage.setItem('phi_sage_v14', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
                 if (feedback) return;
+                const isCorrect = opt.id === puzzle.target.id;
                 
-                // Logic Check
-                let isCorrect = false;
-                if (currentPuzzle.type === "phi_odd") {
-                     // For Odd One Out, any option that matches target ID is correct
-                     isCorrect = opt.id === currentPuzzle.target.id;
-                } else {
-                     isCorrect = opt.id === currentPuzzle.target.id;
-                }
-
                 if (isCorrect) {
-                    playTone('correct'); setFeedback('correct');
+                    setFeedback('correct');
+                    const newScore = userData.score + 10 + (userData.streak + 1 >= 5 ? 20 : 0);
                     setTimeout(() => {
-                        setUserData(p => ({ ...p, score: p.score + 10, levelIdx: p.levelIdx + 1, streak: p.streak + 1 }));
-                        setScreen('result'); // Go to result screen
+                        setUserData(p => ({ ...p, score: newScore, levelIdx: p.levelIdx + 1, streak: p.streak + 1 }));
+                        setScreen('result');
                         setFeedback(null);
-                    }, 1000);
+                    }, 800);
                 } else {
-                    playTone('wrong'); setFeedback('wrong');
-                    setUserData(p => ({ ...p, lives: Math.max(0, p.lives - 1), streak: 0, lastLifeLost: p.lives === 3 ? Date.now() : p.lastLifeLost }));
-                    speak("Salah, coba lagi!");
+                    setFeedback('wrong');
+                    setUserData(p => ({ ...p, lives: Math.max(0, p.lives - 1), streak: 0, lastLifeLost: p.lives===3?Date.now():p.lastLifeLost }));
                     setTimeout(() => setFeedback(null), 800);
                 }
             };
 
-            // --- RENDERERS ---
-            
-            // 1. MENU SCREEN
+            // --- SCREENS ---
             if (screen === 'menu') return (
-                <div className="app-container p-8 justify-center items-center text-center">
-                    <div className="text-8xl mb-4 animate-bounce">🧩</div>
+                <div className="app-container p-6 justify-center items-center text-center">
+                    <div className="text-8xl mb-4 animate-pulse">🧩</div>
                     <h1 className="text-4xl font-black text-white mb-2 tracking-tighter">AKADEMI SAGE</h1>
-                    <p className="text-slate-400 mb-10 font-bold uppercase tracking-widest text-xs">Phi Brain Junior v13.0</p>
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-xs">Infinite Puzzle v14.0</p>
                     
-                    <button onClick={startNewGame} className="menu-btn border-b-4 border-yellow-700">
+                    <button onClick={() => { setUserData({...userData, levelIdx: 0, score: 0, lives: 3}); setScreen('game'); setTimeout(generateMission, 100); }} className="menu-btn">
                         MULAI BARU
                     </button>
-                    
-                    <button onClick={continueGame} className={`menu-btn border-b-4 border-yellow-700 ${userData.levelIdx === 0 ? 'disabled' : ''}`}>
+                    <button onClick={() => { setScreen('game'); setTimeout(generateMission, 100); }} className={`menu-btn secondary ${userData.levelIdx===0?'opacity-50':''}`}>
                         LANJUTKAN (Lv {userData.levelIdx + 1})
                     </button>
-
-                    <div className="mt-8 text-slate-500 text-sm">
-                        Lives: {userData.lives}/3 <br/> {regenTimer && `Regen: ${regenTimer}`}
-                    </div>
+                    <div className="text-slate-500 text-xs mt-4">Lives: {userData.lives}/3 • {regenTimer}</div>
                 </div>
             );
 
-            // 2. RESULT/TRANSITION SCREEN
             if (screen === 'result') return (
-                <div className="app-container p-8 justify-center items-center text-center bg-slate-900">
-                    <div className="text-8xl mb-6 animate-pulse">🌟</div>
+                <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
+                    <div className="text-8xl mb-4 animate-bounce">🌟</div>
                     <h2 className="text-3xl font-bold text-white mb-2">HEBAT!</h2>
-                    <p className="text-amber-400 font-bold text-xl mb-10">+10 Poin</p>
-                    
-                    <button onClick={() => { setScreen('game'); nextMisi(); }} className="menu-btn bg-green-500 border-green-700 shadow-green-900">
-                        LANJUT LEVEL
-                    </button>
-                    <button onClick={() => setScreen('menu')} className="text-slate-400 font-bold mt-4 underline">
-                        Kembali ke Menu
-                    </button>
+                    <p className="text-slate-400 mb-8">Kamu naik ke Level {userData.levelIdx + 1}</p>
+                    <button onClick={() => { setScreen('game'); generateMission(); }} className="menu-btn bg-green-500 shadow-green-700">LANJUT</button>
+                    <button onClick={() => setScreen('menu')} className="text-white underline mt-4">Menu Utama</button>
                 </div>
             );
 
-            // 3. GAME SCREEN
             return (
                 <div className="app-container">
-                    {/* HUD */}
                     <div className="hud-bar">
-                        <div className="flex flex-col items-center">
-                            <span className="text-2xl drop-shadow-md">❤️ {userData.lives}</span>
-                            <span className="text-[10px] text-amber-500 font-bold">{regenTimer}</span>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">Misi {userData.levelIdx + 1}</div>
-                        </div>
-                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold shadow-lg border border-amber-400">
-                            ⭐ {userData.score}
-                        </div>
+                        <div className="flex flex-col items-center"><span className="text-2xl">❤️ {userData.lives}</span><span className="text-[10px] text-amber-500">{regenTimer}</span></div>
+                        <div className="text-center"><span className="text-xs text-slate-400 font-bold uppercase">Misi {userData.levelIdx + 1}</span></div>
+                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm">⭐ {userData.score}</div>
                     </div>
 
-                    {/* Main Area */}
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+                    <div className="game-area">
                         {userData.lives <= 0 ? (
                             <div className="text-center">
-                                <div className="text-6xl mb-4">😴</div>
                                 <h2 className="text-2xl text-white font-bold mb-4">Istirahat Dulu!</h2>
-                                <p className="text-slate-400 mb-6">Tunggu nyawa terisi kembali.</p>
-                                <button onClick={() => setScreen('menu')} className="px-6 py-3 bg-slate-700 text-white rounded-xl font-bold">Ke Menu</button>
+                                <button onClick={() => setScreen('menu')} className="menu-btn">Ke Menu</button>
                             </div>
-                        ) : gameState === 'playing' && currentPuzzle ? (
+                        ) : puzzle ? (
                             <>
-                                <h2 className="text-2xl font-bold text-white mb-6 leading-tight drop-shadow-md">
-                                    {currentPuzzle.instruction}
-                                </h2>
+                                <h2 className="text-xl font-bold text-white mb-6 text-center">{puzzle.instruction}</h2>
                                 
-                                {/* Area Soal */}
                                 <div className="mb-6 flex justify-center w-full">
-                                    {currentPuzzle.type === "phi_sudoku" ? (
-                                        <div className="grid-2x2">
-                                            {currentPuzzle.meta.grid.map((c,i)=><div key={i} className="grid-cell">{c}</div>)}
+                                    {puzzle.type === 'sudoku' ? (
+                                        <div className="sudoku-grid">{puzzle.meta.grid.map((c,i)=><div key={i} className="sudoku-cell">{c}</div>)}</div>
+                                    ) : puzzle.type === 'sequence' ? (
+                                        <div className="sequence-row">{puzzle.meta.seq.map((c,i)=><div key={i} className="seq-item text-white">{c}</div>)}</div>
+                                    ) : puzzle.meta?.isCounting ? (
+                                        <div className="text-center bg-slate-800 p-4 rounded-2xl border-2 border-slate-600">
+                                            <div className="text-4xl mb-2">{puzzle.meta.display}</div>
                                         </div>
-                                    ) : currentPuzzle.type === "phi_sequence" ? (
-                                        <div className="sequence-row">
-                                            {currentPuzzle.meta.sequence.map((c,i)=>
-                                                <span key={i} className={c==="?"?"text-4xl animate-pulse text-amber-400":"text-4xl"}>{c}</span>
-                                            )}
-                                        </div>
-                                    ) : currentPuzzle.type === "phi_odd" ? (
-                                        <div className="text-6xl animate-bounce">🤔</div>
                                     ) : (
-                                        <div className={`target-box ${currentPuzzle.type === 'phi_matching' ? 'solid' : ''}`}>
-                                            {currentPuzzle.type === "phi_shadow" ? 
-                                                <span className="text-8xl grayscale brightness-0 opacity-20">{currentPuzzle.target.icon}</span> : 
-                                                <span className="text-7xl">{currentPuzzle.type === 'phi_counting' ? '📦' : currentPuzzle.target.icon}</span>}
+                                        <div className={`target-display ${puzzle.type==='match'?'solid':''}`}>
+                                            {puzzle.type === 'shadow' ? 
+                                                <span className="grayscale brightness-0 opacity-20 text-6xl">{puzzle.target.icon}</span> : 
+                                                <span className="text-6xl">{puzzle.target.icon}</span>}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Pilihan Jawaban */}
-                                <div className={`option-grid ${currentPuzzle.options.length > 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
-                                    {currentPuzzle.options.map((opt, i) => (
+                                <div className={`option-grid ${puzzle.options.length > 2 ? 'grid-2' : ''}`}>
+                                    {puzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
-                                            className={`btn-choice ${feedback === 'correct' && opt.id === currentPuzzle.target.id ? 'correct' : ''} ${feedback === 'wrong' && opt.id !== currentPuzzle.target.id ? 'wrong opacity-50' : ''}`}>
+                                            className={`btn-choice ${feedback==='correct' && opt.id===puzzle.target.id ? 'correct' : ''} ${feedback==='wrong' && opt.id!==puzzle.target.id ? 'wrong' : ''}`}>
                                             {opt.icon}
                                         </button>
                                     ))}
                                 </div>
                             </>
-                        ) : (
-                            <div className="text-white">Memuat...</div>
-                        )}
+                        ) : <div className="text-white">Memuat...</div>}
                     </div>
                 </div>
             );
