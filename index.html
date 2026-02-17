@@ -13,16 +13,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
         
-        body, html { 
-            margin: 0; padding: 0; 
-            height: 100%; width: 100%;
-            overflow: hidden; 
-            font-family: 'Fredoka', sans-serif; 
-            background: #0F172A;
-            -webkit-user-select: none; user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Fredoka', sans-serif; background: #0F172A; -webkit-tap-highlight-color: transparent; }
         #root { height: 100%; width: 100%; }
 
         .app-container {
@@ -34,77 +25,36 @@
             padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .hud-bar {
-            height: 55px; flex-shrink: 0;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 1rem; background: rgba(15, 23, 42, 0.95);
-            border-bottom: 3px solid #F59E0B; z-index: 20;
-        }
+        .hud-bar { height: 55px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; background: rgba(15, 23, 42, 0.95); border-bottom: 3px solid #F59E0B; z-index: 20; }
+        .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-y: auto; }
+        .instruction-text { font-size: 1.1rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.5rem; text-align: center; }
 
-        .game-area {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: flex-start;
-            padding: 1rem; width: 100%; overflow-y: auto;
-        }
-
-        .instruction-text {
-            font-size: 1.1rem; font-weight: 700; color: #F1F5F9;
-            margin-bottom: 0.5rem; text-align: center;
-        }
-
-        /* --- GAME CARD (MENU) --- */
-        .game-card {
-            background: #334155; border-radius: 16px; padding: 16px; margin-bottom: 20px;
-            width: 100%; border: 2px solid #475569; box-shadow: 0 4px 0 #1e293b;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .game-card-title { font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .game-card-btn-group { display: flex; gap: 10px; width: 100%; }
-        
-        .menu-btn {
-            flex: 1; background: #F59E0B; color: white; padding: 12px; 
-            border-radius: 12px; font-size: 1rem; font-weight: bold;
-            box-shadow: 0 3px 0 #B45309; transition: all 0.1s; text-align: center;
-        }
-        .menu-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #B45309; }
-        .menu-btn.secondary { background: #475569; box-shadow: 0 3px 0 #1e293b; }
-        .menu-btn.disabled { opacity: 0.5; pointer-events: none; }
-
-        /* --- MAZE STYLES --- */
-        .maze-arrows-box { 
-            background: #334155; padding: 8px 12px; border-radius: 12px; margin-bottom: 15px;
-            font-size: 1.6rem; border: 2px solid #64748b; color: #F59E0B;
-            box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.3rem; text-align: center;
-            max-width: 95%; flex-wrap: wrap; display: flex; justify-content: center; gap: 5px;
-        }
-        .maze-grid {
-            display: grid; gap: 4px; background: #1E293B; padding: 6px; border-radius: 16px; border: 3px solid #475569; margin-bottom: 1rem;
-        }
-        .maze-cell {
-            width: 45px; height: 45px; background: #0F172A; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
-            color: #64748B; font-weight: bold; border: 1px solid #334155; position: relative;
-        }
+        /* MAZE STYLES */
+        .maze-arrows-box { background: #334155; padding: 8px 12px; border-radius: 12px; margin-bottom: 15px; font-size: 1.6rem; border: 2px solid #64748b; color: #F59E0B; box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.3rem; text-align: center; max-width: 95%; flex-wrap: wrap; display: flex; justify-content: center; gap: 5px; }
+        .maze-grid { display: grid; gap: 4px; background: #1E293B; padding: 6px; border-radius: 16px; border: 3px solid #475569; margin-bottom: 1rem; }
+        .maze-cell { width: 45px; height: 45px; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #64748B; font-weight: bold; border: 1px solid #334155; position: relative; }
         .grid-4x4 .maze-cell { width: 40px; height: 40px; font-size: 1.2rem; }
         .grid-5x5 .maze-cell { width: 34px; height: 34px; font-size: 1rem; }
         .maze-cell.start { background: #F59E0B; color: white; border-color: #B45309; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); z-index: 10; }
 
-        /* --- BLOCK PUZZLE STYLES (NEW) --- */
-        .block-target {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px;
-            background: #1e293b; padding: 4px; border-radius: 12px; border: 3px solid #64748b; margin-bottom: 20px;
-            width: 130px; height: 130px;
+        /* --- BLOCK PUZZLE STYLES (UPDATED) --- */
+        .block-target-grid {
+            display: grid; gap: 2px; background: #1e293b; padding: 4px; border-radius: 8px; border: 3px solid #475569; margin-bottom: 20px;
         }
-        .block-cell {
-            width: 100%; height: 100%; border-radius: 4px;
-            background-size: cover; background-position: center;
+        .block-target-cell {
+            width: 40px; height: 40px; border-radius: 4px; background: #0F172A; /* Kosong */
         }
-        .block-cell.missing {
-            background: transparent; border: 2px dashed #94a3b8; opacity: 0.5;
-            display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #94a3b8;
-        }
+        .block-target-cell.filled { background: #3B82F6; border: 1px solid #2563EB; } /* Terisi biru */
+        .block-target-cell.locked { background: #475569; border: 1px solid #334155; opacity: 0.5; } /* Abu2 mati */
+        .block-target-cell.hole { background: #0F172A; border: 2px dashed #F59E0B; opacity: 0.8; } /* Lubang target */
 
-        /* --- OPTION GRID --- */
+        /* Shape Preview di Tombol */
+        .shape-preview { display: grid; gap: 2px; pointer-events: none; }
+        .shape-cell { width: 12px; height: 12px; border-radius: 2px; }
+        .shape-cell.active { background: #F59E0B; }
+        .shape-cell.empty { background: transparent; }
+
+        /* BUTTONS & UI */
         .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -119,14 +69,16 @@
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
         
-        .block-option-img { width: 100%; height: 100%; object-fit: cover; }
+        .game-card { background: #334155; border-radius: 16px; padding: 16px; margin-bottom: 20px; width: 100%; border: 2px solid #475569; box-shadow: 0 4px 0 #1e293b; display: flex; flex-direction: column; align-items: center; }
+        .game-card-title { font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .game-card-btn-group { display: flex; gap: 10px; width: 100%; }
+        .menu-btn { flex: 1; background: #F59E0B; color: white; padding: 12px; border-radius: 12px; font-size: 1rem; font-weight: bold; box-shadow: 0 3px 0 #B45309; transition: all 0.1s; text-align: center; }
+        .menu-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #B45309; }
+        .menu-btn.secondary { background: #475569; box-shadow: 0 3px 0 #1e293b; }
+        .menu-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-        .home-icon-btn {
-            background: #334155; padding: 4px 8px; border-radius: 8px;
-            font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569;
-        }
     </style>
 </head>
 <body>
@@ -135,23 +87,25 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Mock Data Blok (Bisa diganti gambar asli nanti)
-        // Kita gunakan pola warna gradasi/tekstur agar terlihat seperti potongan
-        const BLOCK_PATTERNS = [
-            'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)', // Pink
-            'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)', // Blue
-            'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)', // Green
-            'linear-gradient(120deg, #f6d365 0%, #fda085 100%)', // Orange
-            'linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%)', // Lime
-            'linear-gradient(120deg, #f093fb 0%, #f5576c 100%)'  // Purple
-        ];
+        // --- SHAPE DEFINITIONS (Tetris-like) ---
+        // 1 = filled, 0 = empty. Grid 3x3 max for preview
+        const SHAPES = {
+            'O': [[1,1], [1,1]], // Kotak 2x2
+            'I': [[1], [1], [1]], // Garis Vertikal 3
+            'L': [[1,0], [1,0], [1,1]], // L shape
+            'T': [[1,1,1], [0,1,0]], // T shape
+            'Z': [[1,1,0], [0,1,1]], // Z shape
+            'S': [[0,1,1], [1,1,0]], // S shape
+            'dot': [[1]], // 1 dot
+            'bar2': [[1,1]] // 2 bar horz
+        };
 
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_v22');
+                const saved = localStorage.getItem('jelajah_v23');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (!parsed.maze) return { lives: 3, lastLifeLost: null, maze: { level: 0, score: 0 }, block: { level: 0, score: 0 } };
@@ -165,7 +119,7 @@
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
-            useEffect(() => { localStorage.setItem('jelajah_v22', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_v23', JSON.stringify(userData)); }, [userData]);
 
             useEffect(() => {
                 const timer = setInterval(() => {
@@ -227,37 +181,74 @@
                 });
             };
 
-            // --- BLOCK PUZZLE LOGIC (Tetris Style) ---
+            // --- BLOCK PUZZLE LOGIC (REAL TETRIS STYLE) ---
             const generateBlock = () => {
                 const level = userData.block.level;
-                
-                // Pilih 4 pola berbeda untuk grid 2x2
-                let gridPatterns = [...BLOCK_PATTERNS].sort(()=>0.5-Math.random()).slice(0, 4);
-                
-                // Pilih 1 posisi yang hilang (0-3)
-                const missingIndex = Math.floor(Math.random() * 4);
-                const targetPattern = gridPatterns[missingIndex];
-
-                // Options
+                // Tentukan ukuran grid: 3x3, 4x4, 5x5
+                let gridSize = 3; 
+                let lockedCount = 1; // Jumlah blok mati
                 let optionCount = 2;
-                if (level >= 5) optionCount = 3;
-                if (level >= 10) optionCount = 4;
-
-                const targetOption = { id: 'correct', pattern: targetPattern, isTarget: true };
                 
-                // Pengecoh: Pola lain yang BUKAN pola target (ambil dari sisa pola yang tersedia)
-                const availableDistractors = BLOCK_PATTERNS.filter(p => p !== targetPattern);
-                const wrongOpts = availableDistractors.sort(() => 0.5 - Math.random()).slice(0, optionCount - 1).map((p, i) => ({
-                    id: `wrong_${i}`, pattern: p, isTarget: false
+                if (level >= 5) { gridSize = 4; lockedCount = 2; optionCount = 3; }
+                if (level >= 15) { gridSize = 4; lockedCount = 4; optionCount = 4; }
+                
+                const totalCells = gridSize * gridSize;
+                let gridState = Array(totalCells).fill('filled'); // Default semua terisi biru
+
+                // 1. Buat Hole (Target Shape)
+                // Kita ambil random shape dari SHAPES
+                const shapeKeys = Object.keys(SHAPES);
+                const targetShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+                const targetMatrix = SHAPES[targetShapeKey]; // [[1,1], [1,0]]
+                
+                // Cari posisi random di grid yang muat shape ini
+                const shapeH = targetMatrix.length;
+                const shapeW = targetMatrix[0].length;
+                
+                const maxR = gridSize - shapeH;
+                const maxC = gridSize - shapeW;
+                
+                const startR = Math.floor(Math.random() * (maxR + 1));
+                const startC = Math.floor(Math.random() * (maxC + 1));
+                
+                // Bolongi grid sesuai shape (tandai sebagai 'hole')
+                for(let r=0; r<shapeH; r++){
+                    for(let c=0; c<shapeW; c++){
+                        if(targetMatrix[r][c] === 1) {
+                            const gridIdx = (startR + r) * gridSize + (startC + c);
+                            gridState[gridIdx] = 'hole';
+                        }
+                    }
+                }
+
+                // 2. Tambah Locked Blocks (Pengganggu)
+                // Cari sel yg masih 'filled' (biru), ubah jadi 'locked' (abu)
+                let availableForLock = gridState.map((s, i) => s === 'filled' ? i : -1).filter(i => i !== -1);
+                
+                for(let i=0; i<lockedCount; i++){
+                    if(availableForLock.length === 0) break;
+                    const randIdx = Math.floor(Math.random() * availableForLock.length);
+                    const gridIdx = availableForLock[randIdx];
+                    gridState[gridIdx] = 'locked';
+                    availableForLock.splice(randIdx, 1);
+                }
+
+                // 3. Generate Options
+                const targetOption = { id: 'correct', shapeMatrix: targetMatrix, isTarget: true };
+                
+                // Wrong options: Ambil shape lain yang beda
+                const wrongShapes = shapeKeys.filter(k => k !== targetShapeKey);
+                const wrongOpts = wrongShapes.sort(()=>0.5-Math.random()).slice(0, optionCount - 1).map((k, i) => ({
+                    id: `wrong_${i}`, shapeMatrix: SHAPES[k], isTarget: false
                 }));
 
                 setPuzzle({
                     gameType: 'block',
-                    gridPatterns: gridPatterns,
-                    missingIndex: missingIndex,
+                    gridSize: gridSize,
+                    gridState: gridState, // Array status sel
                     options: [targetOption, ...wrongOpts].sort(() => 0.5 - Math.random()),
                     targetId: 'correct',
-                    instruction: "Lengkapi potongan yang hilang!"
+                    instruction: "Pasang blok yang cocok!"
                 });
             };
 
@@ -302,13 +293,25 @@
                 }
             };
 
-            // --- RENDERERS ---
+            // --- RENDER HELPERS ---
+            const renderShapePreview = (matrix) => {
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                return (
+                    <div className="shape-preview" style={{gridTemplateColumns: `repeat(${cols}, 1fr)`}}>
+                        {matrix.flat().map((cell, i) => (
+                            <div key={i} className={`shape-cell ${cell===1?'active':'empty'}`} />
+                        ))}
+                    </div>
+                );
+            };
+
             const renderMenu = () => (
                 <div className="app-container p-6 justify-start overflow-y-auto">
                     <div className="text-center mt-4 mb-8">
                         <div className="text-6xl mb-2">🧩</div>
                         <h1 className="text-2xl font-black text-white uppercase">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">Edisi Lengkap v22.0</p>
+                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">v23.0 - True Blocks</p>
                         <div className="text-slate-400 text-xs mt-2">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                     </div>
 
@@ -317,8 +320,7 @@
                         <div className="text-slate-400 text-xs mb-4">Level {userData.maze.level + 1} • Skor {userData.maze.score}</div>
                         <div className="game-card-btn-group">
                             <button onClick={() => startGame('maze', 'new')} className="menu-btn">MULAI BARU</button>
-                            <button onClick={() => startGame('maze', 'continue')} 
-                                className={`menu-btn secondary ${userData.maze.level===0?'disabled':''}`}>LANJUT</button>
+                            <button onClick={() => startGame('maze', 'continue')} className={`menu-btn secondary ${userData.maze.level===0?'disabled':''}`}>LANJUT</button>
                         </div>
                     </div>
 
@@ -327,8 +329,7 @@
                         <div className="text-slate-400 text-xs mb-4">Level {userData.block.level + 1} • Skor {userData.block.score}</div>
                         <div className="game-card-btn-group">
                             <button onClick={() => startGame('block', 'new')} className="menu-btn">MULAI BARU</button>
-                            <button onClick={() => startGame('block', 'continue')} 
-                                className={`menu-btn secondary ${userData.block.level===0?'disabled':''}`}>LANJUT</button>
+                            <button onClick={() => startGame('block', 'continue')} className={`menu-btn secondary ${userData.block.level===0?'disabled':''}`}>LANJUT</button>
                         </div>
                     </div>
                 </div>
@@ -339,9 +340,7 @@
                     <div className="hud-bar">
                         <div className="flex flex-col items-center"><span className="text-xl">❤️ {userData.lives}</span><span className="text-[9px] text-amber-500">{regenTimer}</span></div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">
-                                {activeGame === 'maze' ? 'Labirin' : 'Blok'} Lv {userData[activeGame].level + 1}
-                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame === 'maze' ? 'Labirin' : 'Blok'} Lv {userData[activeGame].level + 1}</span>
                             <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
                         </div>
                         <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm">⭐ {userData[activeGame].score}</div>
@@ -357,9 +356,7 @@
                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
                                     {puzzle.gameType === 'maze' && (
                                         <>
-                                            <div className="maze-arrows-box">
-                                                {puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}
-                                            </div>
+                                            <div className="maze-arrows-box">{puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}</div>
                                             <div className={`maze-grid grid-${puzzle.gridSize}`} style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                                 {puzzle.labels.map((l, i) => (
                                                     <div key={i} className={`maze-cell ${i===puzzle.startIndex ? 'start' : ''} ${puzzle.gridSize===4?'text-sm':''} ${puzzle.gridSize===5?'text-xs':''}`}>
@@ -370,13 +367,11 @@
                                         </>
                                     )}
 
-                                    {/* RENDER BLOCK PUZZLE FIXED */}
                                     {puzzle.gameType === 'block' && (
-                                        <div className="block-target">
-                                            {puzzle.gridPatterns.map((p, i) => (
-                                                <div key={i} className={`block-cell ${i===puzzle.missingIndex ? 'missing' : ''}`}
-                                                     style={{background: i===puzzle.missingIndex ? 'transparent' : p}}>
-                                                    {i===puzzle.missingIndex ? '?' : ''}
+                                        <div className="block-target-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
+                                            {puzzle.gridState.map((status, i) => (
+                                                <div key={i} className={`block-target-cell ${status}`}>
+                                                    {status === 'hole' ? '?' : ''}
                                                 </div>
                                             ))}
                                         </div>
@@ -386,9 +381,8 @@
                                 <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                     {puzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
-                                            className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}
-                                            style={puzzle.gameType === 'block' ? {background: opt.pattern} : {}}>
-                                            {puzzle.gameType === 'maze' ? opt.icon : ''}
+                                            className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
+                                            {puzzle.gameType === 'maze' ? opt.icon : renderShapePreview(opt.shapeMatrix)}
                                         </button>
                                     ))}
                                 </div>
@@ -403,11 +397,8 @@
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-7xl mb-4">🌟</div>
                     <h2 className="text-2xl font-bold text-white mb-6">Hebat!</h2>
-                    {/* TOMBOL LANJUT DIPERBAIKI UKURANNYA */}
-                    <button onClick={() => { setScreen('game'); nextLevel(); }} 
-                        className="menu-btn bg-green-600 w-full max-w-xs py-3 text-lg">
-                        LANJUT LEVEL
-                    </button>
+                    {/* BUTTON FIX SIZE */}
+                    <button onClick={() => { setScreen('game'); nextLevel(); }} className="menu-btn bg-green-600 w-full max-w-[200px] py-3 text-lg">LANJUT LEVEL</button>
                     <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold mt-4 uppercase text-xs">Ke Menu Utama</button>
                 </div>
             );
