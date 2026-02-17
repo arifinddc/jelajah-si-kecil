@@ -48,25 +48,24 @@
         .mini-cell.active { background: #F59E0B; box-shadow: inset 0 0 2px rgba(255,255,255,0.5); }
         .mini-cell.empty { background: transparent; }
 
-        /* --- MEMORY GAME STYLES (NEW) --- */
-        .memory-shelf {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-            background: #1e293b; padding: 20px; border-radius: 16px; border: 3px solid #475569;
-            margin-bottom: 10px; min-height: 150px; width: 100%; max-width: 320px;
-        }
-        .memory-item {
-            width: 60px; height: 60px; background: #0F172A; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .timer-bar-container {
-            width: 100%; max-width: 320px; height: 8px; background: #334155;
-            border-radius: 4px; overflow: hidden; margin-bottom: 20px;
-        }
-        .timer-bar-fill {
-            height: 100%; background: #F59E0B; transition: width linear;
-        }
+        /* MEMORY GAME STYLES */
+        .memory-shelf { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; background: #1e293b; padding: 20px; border-radius: 16px; border: 3px solid #475569; margin-bottom: 10px; min-height: 150px; width: 100%; max-width: 320px; }
+        .memory-item { width: 60px; height: 60px; background: #0F172A; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .timer-bar-container { width: 100%; max-width: 320px; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+        .timer-bar-fill { height: 100%; background: #F59E0B; transition: width linear; }
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* --- SECRET CODE STYLES (NEW) --- */
+        .code-legend { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; background: #334155; padding: 10px; border-radius: 12px; border: 2px solid #64748b; }
+        .legend-item { display: flex; flex-direction: column; align-items: center; background: #0F172A; padding: 5px 10px; border-radius: 8px; border: 1px solid #475569; }
+        .legend-icon { font-size: 1.5rem; }
+        .legend-val { font-size: 1.2rem; font-weight: bold; color: #F59E0B; border-top: 1px solid #334155; width: 100%; text-align: center; }
+        
+        .code-question-box { 
+            display: flex; gap: 10px; align-items: center; justify-content: center; 
+            background: #1e293b; padding: 15px; border-radius: 16px; border: 3px solid #F59E0B; margin-bottom: 20px; 
+        }
+        .question-icon { font-size: 3rem; animation: bounce 2s infinite; }
 
         /* UI ELEMENTS */
         .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
@@ -99,7 +98,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
         const BLOCK_PATTERNS = [
             'linear-gradient(135deg, #3B82F6, #2563EB)', 
@@ -109,25 +108,32 @@
             'linear-gradient(135deg, #8B5CF6, #7C3AED)'
         ];
 
-        // Emojis for Memory Game
+        const SHAPES = {
+            'O': [[1,1], [1,1]], 'I': [[1], [1], [1]], 
+            'L': [[1,0], [1,0], [1,1]], 'T': [[1,1,1], [0,1,0]], 
+            'Z': [[1,1,0], [0,1,1]], 'S': [[0,1,1], [1,1,0]], 
+            'dot': [[1]], 'bar2': [[1,1]]
+        };
+
         const MEMORY_EMOJIS = ["🐱", "🐶", "🦁", "🐸", "🐵", "🍎", "🍌", "🍇", "🍉", "🍓", "🚗", "🚀", "⚽", "🏀", "🍕", "🍔", "🍦", "🎈", "🎁", "⏰"];
+        const CODE_EMOJIS = ["🍎", "🍌", "🍇", "🍉", "🍒", "🥝", "🍍", "🥥"];
+        const CODE_VALS = ["A", "B", "C", "D", "1", "2", "3", "4"];
 
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [activeGame, setActiveGame] = useState(null);
             
-            // USER DATA with Memory
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_v25');
+                const saved = localStorage.getItem('jelajah_v26');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, 
                     maze: { level: 0, score: 0 }, 
                     block: { level: 0, score: 0 },
-                    memory: { level: 0, score: 0 } // NEW
+                    memory: { level: 0, score: 0 },
+                    secret: { level: 0, score: 0 } // NEW GAME DATA
                 };
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    // Merge if memory is missing in old save
                     return { ...defaultData, ...parsed };
                 }
                 return defaultData;
@@ -137,11 +143,10 @@
             const [feedback, setFeedback] = useState(null);
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
-            const [memTimer, setMemTimer] = useState(100); // For progress bar
+            const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_v25', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_v26', JSON.stringify(userData)); }, [userData]);
 
-            // Regen System
             useEffect(() => {
                 const timer = setInterval(() => {
                     if (userData.lives < 3 && userData.lastLifeLost) {
@@ -153,18 +158,16 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            // Memory Timer System
+            // Memory Timer
             useEffect(() => {
                 if (activeGame === 'memory' && puzzle && puzzle.phase === 'memorize') {
                     const duration = puzzle.duration * 1000;
                     const interval = 50; 
                     const step = 100 / (duration / interval);
-                    
                     const t = setInterval(() => {
                         setMemTimer(prev => {
                             if (prev <= 0) {
                                 clearInterval(t);
-                                // Switch to Question Phase
                                 setPuzzle(p => ({ ...p, phase: 'question', instruction: "Mana benda yang tadi ada?" }));
                                 return 0;
                             }
@@ -175,8 +178,20 @@
                 }
             }, [puzzle, activeGame]);
 
+            // --- HELPER: ROTATE MATRIX ---
+            const rotateMatrix = (matrix) => {
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                let newMatrix = Array.from({ length: cols }, () => Array(rows).fill(0));
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        newMatrix[c][rows - 1 - r] = matrix[r][c];
+                    }
+                }
+                return newMatrix;
+            };
 
-            // --- GAME LOGIC GENERATORS ---
+            // --- GAME LOGIC ---
 
             const generateMaze = () => {
                 const level = userData.maze.level;
@@ -229,9 +244,11 @@
             const generateBlock = () => {
                 const level = userData.block.level;
                 let gridSize = 3; let missingCount = 2; let isScattered = false; let optionCount = 2; let lockedCount = 0;
+                let isRotationActive = false; // Flag Rotasi
+
                 if (level >= 5) { gridSize = 4; missingCount = 3; lockedCount = 1; optionCount = 3; }
-                if (level >= 10) { gridSize = 4; missingCount = 3; lockedCount = 2; optionCount = 4; isScattered = true; }
-                if (level >= 20) { gridSize = 4; missingCount = 4; lockedCount = 3; optionCount = 4; isScattered = true; }
+                if (level >= 10) { gridSize = 4; missingCount = 3; lockedCount = 2; optionCount = 4; isScattered = true; isRotationActive = true; } // ROTASI ON
+                if (level >= 20) { gridSize = 4; missingCount = 4; lockedCount = 3; optionCount = 4; isScattered = true; isRotationActive = true; }
 
                 const totalCells = gridSize * gridSize;
                 const mainPattern = BLOCK_PATTERNS[Math.floor(Math.random() * BLOCK_PATTERNS.length)];
@@ -270,7 +287,22 @@
                 missingIndices.forEach(i => gridState[i] = 'hole');
                 lockedIndices.forEach(i => gridState[i] = 'locked');
 
-                const targetOption = { id: 'correct', indices: [...missingIndices], isTarget: true };
+                // Generate Options
+                // Correct indices (Standard)
+                let correctIndices = [...missingIndices];
+                
+                // Jika Rotasi Aktif, kita memanipulasi INDICES di tombol pilihan agar terlihat seperti diputar
+                // Namun, karena ini blok terpisah (scattered/indices based), rotasi matrix agak rumit.
+                // Pendekatan Simpel Rotasi untuk Scattered: Putar posisi relatif mereka di dalam grid mini 4x4
+                
+                // Kita generate opsi standard dulu
+                const targetOption = { id: 'correct', indices: correctIndices, isTarget: true, isRotated: false };
+
+                // Apply rotation only to target option DISPLAY if needed
+                if (isRotationActive && Math.random() > 0.4) {
+                    targetOption.isRotated = true; // Flag untuk render helper
+                }
+
                 const wrongOpts = [];
                 for (let i=0; i < optionCount - 1; i++) {
                     let fakeIndices = [...missingIndices];
@@ -282,7 +314,7 @@
                              if (!fakeIndices.includes(r)) fakeIndices.push(r);
                         }
                     }
-                    wrongOpts.push({ id: `wrong_${i}`, indices: fakeIndices, isTarget: false });
+                    wrongOpts.push({ id: `wrong_${i}`, indices: fakeIndices, isTarget: false, isRotated: isRotationActive && Math.random() > 0.5 });
                 }
 
                 setPuzzle({
@@ -292,27 +324,21 @@
                     gridPattern: mainPattern,
                     options: [targetOption, ...wrongOpts].sort(() => 0.5 - Math.random()),
                     targetId: 'correct',
-                    instruction: "Pasang blok yang cocok!"
+                    instruction: isRotationActive ? "Pasang blok! (Bisa diputar)" : "Pasang blok yang cocok!"
                 });
             };
 
             const generateMemory = () => {
                 const level = userData.memory.level;
-                // Config
                 let itemCount = 3; let duration = 5; let optionCount = 2;
                 if (level >= 5) { itemCount = 4; duration = 4; optionCount = 3; }
                 if (level >= 15) { itemCount = 5; duration = 3; optionCount = 4; }
                 if (level >= 25) { itemCount = 6; duration = 3; optionCount = 4; }
 
-                // Pick items to show
                 const shuffledPool = [...MEMORY_EMOJIS].sort(() => 0.5 - Math.random());
                 const shownItems = shuffledPool.slice(0, itemCount);
-                
-                // Pick target (one of the shown items)
                 const targetItem = shownItems[Math.floor(Math.random() * shownItems.length)];
-                
-                // Pick distractors (items NOT shown)
-                const notShown = shuffledPool.slice(itemCount); // Items that were not picked
+                const notShown = shuffledPool.slice(itemCount);
                 const distractors = notShown.slice(0, optionCount - 1);
                 
                 const options = [
@@ -320,15 +346,75 @@
                     ...distractors.map((item, i) => ({ id: `wrong_${i}`, icon: item, isTarget: false }))
                 ];
 
-                setMemTimer(100); // Reset Timer
+                setMemTimer(100);
                 setPuzzle({
                     gameType: 'memory',
-                    phase: 'memorize', // memorize -> question
+                    phase: 'memorize',
                     items: shownItems,
                     duration: duration,
                     options: options.sort(() => 0.5 - Math.random()),
                     targetId: 'correct',
                     instruction: "Hafalkan benda ini!"
+                });
+            };
+
+            // --- SECRET CODE GENERATOR (NEW) ---
+            const generateSecret = () => {
+                const level = userData.secret.level;
+                let pairCount = 3; let qLength = 2; let optionCount = 2;
+                
+                if (level >= 5) { pairCount = 4; qLength = 3; optionCount = 3; }
+                if (level >= 15) { pairCount = 5; qLength = 3; optionCount = 4; }
+                if (level >= 25) { pairCount = 5; qLength = 4; optionCount = 4; }
+
+                // 1. Create Legend
+                const shuffledIcons = [...CODE_EMOJIS].sort(()=>0.5-Math.random()).slice(0, pairCount);
+                const shuffledVals = [...CODE_VALS].sort(()=>0.5-Math.random()).slice(0, pairCount);
+                
+                let legend = [];
+                let dict = {}; // Map icon -> val
+                for(let i=0; i<pairCount; i++){
+                    legend.push({ icon: shuffledIcons[i], val: shuffledVals[i] });
+                    dict[shuffledIcons[i]] = shuffledVals[i];
+                }
+
+                // 2. Create Question
+                let questionIcons = [];
+                let answerStr = "";
+                for(let i=0; i<qLength; i++){
+                    const pick = legend[Math.floor(Math.random() * legend.length)];
+                    questionIcons.push(pick.icon);
+                    answerStr += pick.val;
+                }
+
+                // 3. Create Options
+                const targetOption = { id: 'correct', text: answerStr, isTarget: true };
+                
+                const wrongOpts = [];
+                for(let i=0; i<optionCount-1; i++){
+                    // Shuffle answer string or pick random from legend
+                    let fakeStr = "";
+                    if(Math.random() > 0.5) {
+                        // Shuffle existing chars
+                        fakeStr = answerStr.split('').sort(()=>0.5-Math.random()).join('');
+                        if (fakeStr === answerStr) fakeStr = answerStr.split('').reverse().join(''); // Fallback
+                    } else {
+                        // Random vals
+                        for(let k=0; k<qLength; k++) fakeStr += legend[Math.floor(Math.random()*legend.length)].val;
+                    }
+                    // Prevent duplicate correct
+                    if(fakeStr === answerStr) fakeStr += "X"; 
+
+                    wrongOpts.push({ id: `wrong_${i}`, text: fakeStr, isTarget: false });
+                }
+
+                setPuzzle({
+                    gameType: 'secret',
+                    legend: legend,
+                    question: questionIcons,
+                    options: [targetOption, ...wrongOpts].sort(()=>0.5-Math.random()),
+                    targetId: 'correct',
+                    instruction: "Terjemahkan kodenya!"
                 });
             };
 
@@ -342,14 +428,16 @@
                 setTimeout(() => {
                     if (type === 'maze') generateMaze();
                     else if (type === 'block') generateBlock();
-                    else generateMemory();
+                    else if (type === 'memory') generateMemory();
+                    else generateSecret();
                 }, 50);
             };
 
             const nextLevel = () => {
                 if (activeGame === 'maze') generateMaze();
                 else if (activeGame === 'block') generateBlock();
-                else generateMemory();
+                else if (activeGame === 'memory') generateMemory();
+                else generateSecret();
             };
 
             const handleAnswer = (opt) => {
@@ -375,13 +463,25 @@
                 }
             };
 
-            const renderOptionGrid = (indices, gridSize, pattern) => {
-                const displaySize = gridSize; 
-                const cells = Array(displaySize * displaySize).fill(0);
-                indices.forEach(idx => { if (idx < cells.length) cells[idx] = 1; });
+            // RENDER BLOCKS with Rotation Logic
+            const renderOptionGrid = (indices, gridSize, pattern, isRotated) => {
+                // Konversi indices linear ke Matrix 2D
+                let matrix = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
+                indices.forEach(idx => {
+                    const r = Math.floor(idx / gridSize);
+                    const c = idx % gridSize;
+                    if(r < gridSize && c < gridSize) matrix[r][c] = 1;
+                });
+
+                // Apply rotation if needed
+                if (isRotated) {
+                    matrix = rotateMatrix(matrix);
+                }
+
+                // Render back
                 return (
-                    <div className="mini-grid" style={{gridTemplateColumns: `repeat(${displaySize}, 1fr)`}}>
-                        {cells.map((val, i) => (
+                    <div className="mini-grid" style={{gridTemplateColumns: `repeat(${gridSize}, 1fr)`}}>
+                        {matrix.flat().map((val, i) => (
                             <div key={i} className={`mini-cell ${val===1 ? 'active' : 'empty'}`} 
                                  style={{background: val===1 ? pattern : 'transparent'}}></div>
                         ))}
@@ -394,7 +494,7 @@
                     <div className="text-center mt-4 mb-8">
                         <div className="text-6xl mb-2">🧩</div>
                         <h1 className="text-2xl font-black text-white uppercase">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">v25.0 - Toko Ingatan</p>
+                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">v26.0 - Secret Code</p>
                         <div className="text-slate-400 text-xs mt-2">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                     </div>
 
@@ -416,13 +516,21 @@
                         </div>
                     </div>
 
-                    {/* NEW CARD: MEMORY */}
                     <div className="game-card">
                         <div className="game-card-title">📦 Toko Ingatan</div>
                         <div className="text-slate-400 text-xs mb-4">Level {userData.memory.level + 1} • Skor {userData.memory.score}</div>
                         <div className="game-card-btn-group">
                             <button onClick={() => startGame('memory', 'new')} className="menu-btn">MULAI BARU</button>
                             <button onClick={() => startGame('memory', 'continue')} className={`menu-btn secondary ${userData.memory.level===0?'disabled':''}`}>LANJUT</button>
+                        </div>
+                    </div>
+
+                    <div className="game-card">
+                        <div className="game-card-title">🔐 Kode Rahasia</div>
+                        <div className="text-slate-400 text-xs mb-4">Level {userData.secret.level + 1} • Skor {userData.secret.score}</div>
+                        <div className="game-card-btn-group">
+                            <button onClick={() => startGame('secret', 'new')} className="menu-btn">MULAI BARU</button>
+                            <button onClick={() => startGame('secret', 'continue')} className={`menu-btn secondary ${userData.secret.level===0?'disabled':''}`}>LANJUT</button>
                         </div>
                     </div>
                 </div>
@@ -432,7 +540,8 @@
                 let gameTitle = '';
                 if(activeGame === 'maze') gameTitle = 'Labirin';
                 else if(activeGame === 'block') gameTitle = 'Blok';
-                else gameTitle = 'Ingatan';
+                else if(activeGame === 'memory') gameTitle = 'Ingatan';
+                else gameTitle = 'Kode';
 
                 return (
                     <div className="app-container">
@@ -482,31 +591,44 @@
                                                 {puzzle.phase === 'memorize' ? (
                                                     <div className="w-full flex flex-col items-center">
                                                         <div className="memory-shelf">
-                                                            {puzzle.items.map((item, i) => (
-                                                                <div key={i} className="memory-item">{item}</div>
-                                                            ))}
+                                                            {puzzle.items.map((item, i) => <div key={i} className="memory-item">{item}</div>)}
                                                         </div>
-                                                        <div className="timer-bar-container">
-                                                            <div className="timer-bar-fill" style={{width: `${memTimer}%`}}></div>
-                                                        </div>
+                                                        <div className="timer-bar-container"><div className="timer-bar-fill" style={{width: `${memTimer}%`}}></div></div>
                                                     </div>
                                                 ) : (
-                                                    <div className="memory-shelf flex items-center justify-center">
-                                                        <span className="text-4xl">❓</span>
-                                                    </div>
+                                                    <div className="memory-shelf flex items-center justify-center"><span className="text-4xl">❓</span></div>
                                                 )}
                                             </>
                                         )}
+
+                                        {/* SECRET CODE */}
+                                        {puzzle.gameType === 'secret' && (
+                                            <div className="w-full flex flex-col items-center">
+                                                <div className="code-legend">
+                                                    {puzzle.legend.map((l, i) => (
+                                                        <div key={i} className="legend-item">
+                                                            <div className="legend-icon">{l.icon}</div>
+                                                            <div className="legend-val">{l.val}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="code-question-box">
+                                                    {puzzle.question.map((q, i) => <div key={i} className="question-icon">{q}</div>)}
+                                                    <div className="text-4xl text-white font-bold">= ?</div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* OPTIONS (Hide if Memory Phase is Memorize) */}
+                                    {/* OPTIONS */}
                                     {!(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                         <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                             {puzzle.options.map((opt, i) => (
                                                 <button key={i} onClick={() => handleAnswer(opt)} 
                                                     className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
                                                     {puzzle.gameType === 'maze' ? opt.icon : 
-                                                     puzzle.gameType === 'block' ? renderOptionGrid(opt.indices, puzzle.gridSize, puzzle.gridPattern) :
+                                                     puzzle.gameType === 'block' ? renderOptionGrid(opt.indices, puzzle.gridSize, puzzle.gridPattern, opt.isRotated) :
+                                                     puzzle.gameType === 'secret' ? <span className="text-3xl font-bold">{opt.text}</span> :
                                                      opt.icon}
                                                 </button>
                                             ))}
