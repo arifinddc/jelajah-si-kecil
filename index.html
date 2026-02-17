@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.1</title>
+    <title>Jelajah Si Kecil - Beta v1.3</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -81,16 +81,33 @@
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
         
-        .game-card { background: #334155; border-radius: 16px; padding: 16px; margin-bottom: 20px; width: 100%; border: 2px solid #475569; box-shadow: 0 4px 0 #1e293b; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
-        .game-card-title { font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; z-index: 2; }
-        .game-card-btn-group { display: flex; gap: 10px; width: 100%; z-index: 2; }
+        .game-card { background: #334155; border-radius: 16px; padding: 12px; margin-bottom: 12px; width: 100%; border: 2px solid #475569; box-shadow: 0 4px 0 #1e293b; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
+        .game-card-title { font-size: 1.3rem; font-weight: bold; color: white; margin-bottom: 2px; z-index: 2; width: 100%; display: flex; justify-content: space-between; align-items: center; }
         
-        .menu-btn { flex: 1; background: #F59E0B; color: white; padding: 12px; border-radius: 12px; font-size: 1rem; font-weight: bold; box-shadow: 0 3px 0 #B45309; transition: all 0.1s; text-align: center; border: none; }
-        .menu-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #B45309; }
-        .menu-btn.secondary { background: #475569; box-shadow: 0 3px 0 #1e293b; }
-        .menu-btn.daily { background: linear-gradient(135deg, #8B5CF6, #EC4899); box-shadow: 0 3px 0 #7C3AED; }
-        .menu-btn.daily.completed { background: #10B981; box-shadow: 0 3px 0 #059669; cursor: default; }
-        .menu-btn.disabled { opacity: 0.5; pointer-events: none; }
+        /* NEW BUTTON STYLES FOR VISIBILITY */
+        .game-card-btn-group { display: flex; gap: 10px; width: 100%; z-index: 2; margin-top: 10px; }
+        .menu-btn { 
+            flex: 1; 
+            background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%); /* Orange Gradient */
+            color: white; padding: 12px 5px; 
+            border-radius: 10px; font-size: 0.9rem; font-weight: bold; 
+            box-shadow: 0 4px 0 #B45309; /* Tebal di bawah agar terlihat seperti tombol */
+            text-align: center; border: 1px solid #F59E0B;
+            transition: all 0.1s; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;
+        }
+        .menu-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #B45309; }
+        
+        .menu-btn.secondary { 
+            background: linear-gradient(180deg, #475569 0%, #334155 100%); /* Blue-Gray Gradient */
+            box-shadow: 0 4px 0 #1e293b; border: 1px solid #475569;
+        }
+        .menu-btn.secondary:active { transform: translateY(3px); box-shadow: 0 1px 0 #1e293b; }
+
+        .menu-btn.daily { background: linear-gradient(135deg, #8B5CF6, #EC4899); box-shadow: 0 4px 0 #7C3AED; border: none; }
+        .menu-btn.daily:active { transform: translateY(3px); box-shadow: 0 1px 0 #7C3AED; }
+        .menu-btn.daily.completed { background: #10B981; box-shadow: 0 4px 0 #059669; cursor: default; }
+        
+        .menu-btn.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
         
         .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
 
@@ -119,6 +136,14 @@
         const CODE_EMOJIS = ["🍎", "🍌", "🍇", "🍉", "🍒", "🥝", "🍍", "🥥"];
         const CODE_VALS = ["A", "B", "C", "D", "1", "2", "3", "4"];
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
+
+        // SKILL NAMES MAPPING (Unified)
+        const SKILL_NAMES = {
+            maze: 'Navigasi',
+            block: 'Spasial',
+            memory: 'Memori',
+            secret: 'Logika'
+        };
 
         // --- AUDIO ENGINE ---
         const playSound = (type) => {
@@ -155,11 +180,11 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_1');
+                const saved = localStorage.getItem('jelajah_beta_v1_3');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
-                    dailyChallenge: { lastPlayed: null }, // Store Date String
+                    dailyChallenge: { lastPlayed: null }, 
                     stats: { maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0} },
                     maze: { level: 0, score: 0 }, block: { level: 0, score: 0 },
                     memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }
@@ -177,7 +202,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_1', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_3', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -461,10 +486,10 @@
 
                 return (
                     <div className="radar-chart-container">
-                        <span className="radar-label top">Labirin</span>
-                        <span className="radar-label right">Blok</span>
-                        <span className="radar-label bottom">Ingatan</span>
-                        <span className="radar-label left">Kode</span>
+                        <span className="radar-label top">Navigasi</span>
+                        <span className="radar-label right">Spasial</span>
+                        <span className="radar-label bottom">Memori</span>
+                        <span className="radar-label left">Logika</span>
                         <svg width="200" height="200" viewBox="0 0 200 200" style={{background:'#1e293b', borderRadius:'50%'}}>
                             {/* Grid Lines */}
                             <circle cx="100" cy="100" r="20" fill="none" stroke="#334155" strokeWidth="1"/>
@@ -485,7 +510,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.1</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.3</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -499,38 +524,17 @@
                         </button>
                     </div>
 
-                    <div className="game-card">
-                        <div className="game-card-title">🧭 Labirin</div>
-                        <div className="text-slate-400 text-xs mb-2">Level {userData.maze.level + 1}</div>
-                        <div className="game-card-btn-group">
-                            <button onClick={() => startGame('maze', 'new')} className="menu-btn">BARU</button>
-                            <button onClick={() => startGame('maze', 'continue')} className={`menu-btn secondary ${userData.maze.level===0?'disabled':''}`}>LANJUT</button>
+                    {['maze', 'block', 'memory', 'secret'].map(game => (
+                        <div key={game} className="game-card">
+                            <div className="game-card-title">
+                                <span>{SKILL_NAMES[game]}</span>
+                                <span className="text-[10px] text-slate-400">Lv {userData[game].level + 1}</span>
+                            </div>
+                            <div className="game-card-btn-group">
+                                <button onClick={() => startGame(game, 'continue')} className="menu-btn">▶ MULAI</button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="game-card">
-                        <div className="game-card-title">🔲 Blok Puzzle</div>
-                        <div className="text-slate-400 text-xs mb-2">Level {userData.block.level + 1}</div>
-                        <div className="game-card-btn-group">
-                            <button onClick={() => startGame('block', 'new')} className="menu-btn">BARU</button>
-                            <button onClick={() => startGame('block', 'continue')} className={`menu-btn secondary ${userData.block.level===0?'disabled':''}`}>LANJUT</button>
-                        </div>
-                    </div>
-                    <div className="game-card">
-                        <div className="game-card-title">📦 Ingatan</div>
-                        <div className="text-slate-400 text-xs mb-2">Level {userData.memory.level + 1}</div>
-                        <div className="game-card-btn-group">
-                            <button onClick={() => startGame('memory', 'new')} className="menu-btn">BARU</button>
-                            <button onClick={() => startGame('memory', 'continue')} className={`menu-btn secondary ${userData.memory.level===0?'disabled':''}`}>LANJUT</button>
-                        </div>
-                    </div>
-                    <div className="game-card">
-                        <div className="game-card-title">🔐 Kode Rahasia</div>
-                        <div className="text-slate-400 text-xs mb-2">Level {userData.secret.level + 1}</div>
-                        <div className="game-card-btn-group">
-                            <button onClick={() => startGame('secret', 'new')} className="menu-btn">BARU</button>
-                            <button onClick={() => startGame('secret', 'continue')} className={`menu-btn secondary ${userData.secret.level===0?'disabled':''}`}>LANJUT</button>
-                        </div>
-                    </div>
+                    ))}
                     
                     <div className="text-center text-slate-500 text-[10px] mt-4 pb-4">Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}</div>
                 </div>
@@ -538,7 +542,7 @@
 
             if (screen === 'dashboard') return (
                 <div className="app-container p-6">
-                    <h2 className="text-xl font-bold text-white mb-2 text-center">📊 STATISTIK</h2>
+                    <h2 className="text-xl font-bold text-white mb-2 text-center">📊 STATISTIK SKILL</h2>
                     <RadarChart />
                     <div className="grid gap-2 mt-4">
                         {['maze', 'block', 'memory', 'secret'].map(g => {
@@ -547,7 +551,7 @@
                             const rate = total > 0 ? Math.round((stats.w/total)*100) : 0;
                             return (
                                 <div key={g} className="bg-slate-800 p-3 rounded-lg flex justify-between items-center">
-                                    <span className="text-white font-bold capitalize text-sm">{g}</span>
+                                    <span className="text-white font-bold capitalize text-sm">{SKILL_NAMES[g]}</span>
                                     <span className="text-slate-400 text-xs">{rate}% Akurasi ({stats.w}/{total})</span>
                                 </div>
                             )
@@ -606,7 +610,7 @@
                     <div className="hud-bar">
                         <div className="flex flex-col items-center"><span className="text-lg">❤️ {userData.lives}</span><span className="text-[8px] text-slate-400">{regenTimer}</span></div>
                         <div className="flex flex-col items-center">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame==='daily'?'Tantangan':activeGame} Lv {activeGame==='daily'?'?':userData[activeGame].level + 1}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame==='daily'?'Tantangan':SKILL_NAMES[activeGame]} Lv {activeGame==='daily'?'?':userData[activeGame].level + 1}</span>
                             <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
                         </div>
                         <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow">⭐ {userData.stars}</div>
