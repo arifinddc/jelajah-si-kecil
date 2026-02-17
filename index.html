@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.3</title>
+    <title>Jelajah Si Kecil - Beta v1.4</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -71,6 +71,12 @@
         .code-question-box { display: flex; gap: 10px; align-items: center; justify-content: center; background: #1e293b; padding: 15px; border-radius: 16px; border: 3px solid #F59E0B; margin-bottom: 20px; }
         .question-icon { font-size: 3rem; animation: bounce 2s infinite; }
 
+        /* Analysis (Si Beda) Styles */
+        .analysis-grid { display: grid; gap: 10px; width: 100%; max-width: 320px; justify-content: center; }
+        .analysis-btn { background: #334155; border: 2px solid #475569; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; aspect-ratio: 1; transition: transform 0.1s; box-shadow: 0 4px 0 #1e293b; }
+        .analysis-btn:active { transform: scale(0.95); box-shadow: 0 1px 0 #1e293b; }
+        .analysis-btn.wrong-anim { animation: shake 0.3s; background: #EF4444; border-color: #991B1B; }
+
         /* UI Common */
         .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
@@ -84,21 +90,20 @@
         .game-card { background: #334155; border-radius: 16px; padding: 12px; margin-bottom: 12px; width: 100%; border: 2px solid #475569; box-shadow: 0 4px 0 #1e293b; display: flex; flex-direction: column; align-items: center; position: relative; overflow: hidden; }
         .game-card-title { font-size: 1.3rem; font-weight: bold; color: white; margin-bottom: 2px; z-index: 2; width: 100%; display: flex; justify-content: space-between; align-items: center; }
         
-        /* NEW BUTTON STYLES FOR VISIBILITY */
         .game-card-btn-group { display: flex; gap: 10px; width: 100%; z-index: 2; margin-top: 10px; }
         .menu-btn { 
             flex: 1; 
-            background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%); /* Orange Gradient */
+            background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
             color: white; padding: 12px 5px; 
             border-radius: 10px; font-size: 0.9rem; font-weight: bold; 
-            box-shadow: 0 4px 0 #B45309; /* Tebal di bawah agar terlihat seperti tombol */
+            box-shadow: 0 4px 0 #B45309; 
             text-align: center; border: 1px solid #F59E0B;
             transition: all 0.1s; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;
         }
         .menu-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #B45309; }
         
         .menu-btn.secondary { 
-            background: linear-gradient(180deg, #475569 0%, #334155 100%); /* Blue-Gray Gradient */
+            background: linear-gradient(180deg, #475569 0%, #334155 100%);
             box-shadow: 0 4px 0 #1e293b; border: 1px solid #475569;
         }
         .menu-btn.secondary:active { transform: translateY(3px); box-shadow: 0 1px 0 #1e293b; }
@@ -111,13 +116,15 @@
         
         .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
 
-        /* RADAR CHART */
-        .radar-chart-container { position: relative; width: 200px; height: 200px; margin: 20px auto; }
-        .radar-label { position: absolute; font-size: 10px; font-weight: bold; color: white; text-transform: uppercase; }
-        .radar-label.top { top: -20px; left: 50%; transform: translateX(-50%); }
-        .radar-label.right { top: 50%; right: -30px; transform: translateY(-50%); }
-        .radar-label.bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
-        .radar-label.left { top: 50%; left: -30px; transform: translateY(-50%); }
+        /* RADAR CHART PENTAGON */
+        .radar-chart-container { position: relative; width: 220px; height: 200px; margin: 20px auto; }
+        .radar-label { position: absolute; font-size: 9px; font-weight: bold; color: white; text-transform: uppercase; text-shadow: 0 1px 2px black; }
+        /* 5 Points positioning approximates */
+        .radar-label.p1 { top: -15px; left: 50%; transform: translateX(-50%); } /* Top */
+        .radar-label.p2 { top: 35%; right: -25px; } /* Right Top */
+        .radar-label.p3 { bottom: 0; right: -10px; } /* Right Bottom */
+        .radar-label.p4 { bottom: 0; left: -10px; } /* Left Bottom */
+        .radar-label.p5 { top: 35%; left: -25px; } /* Left Top */
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -135,6 +142,7 @@
         const MEMORY_EMOJIS = ["🐱", "🐶", "🦁", "🐸", "🐵", "🍎", "🍌", "🍇", "🍉", "🍓", "🚗", "🚀", "⚽", "🏀", "🍕", "🍔", "🍦", "🎈", "🎁", "⏰"];
         const CODE_EMOJIS = ["🍎", "🍌", "🍇", "🍉", "🍒", "🥝", "🍍", "🥥"];
         const CODE_VALS = ["A", "B", "C", "D", "1", "2", "3", "4"];
+        const ANALYSIS_EMOJIS = ["😀", "😎", "🚀", "🐱", "🐶", "🍎", "⚽", "🚗"]; 
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
 
         // SKILL NAMES MAPPING (Unified)
@@ -142,7 +150,8 @@
             maze: 'Navigasi',
             block: 'Spasial',
             memory: 'Memori',
-            secret: 'Logika'
+            secret: 'Logika',
+            analysis: 'Analisis'
         };
 
         // --- AUDIO ENGINE ---
@@ -180,17 +189,20 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_3');
+                const saved = localStorage.getItem('jelajah_beta_v1_4');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
                     dailyChallenge: { lastPlayed: null }, 
-                    stats: { maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0} },
+                    stats: { maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0}, analysis:{w:0,l:0} },
                     maze: { level: 0, score: 0 }, block: { level: 0, score: 0 },
-                    memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }
+                    memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }, analysis: { level: 0, score: 0 }
                 };
                 if (saved) {
                     const parsed = JSON.parse(saved);
+                    // Ensure analysis exists if upgrading from old save
+                    if(!parsed.analysis) parsed.analysis = { level: 0, score: 0 };
+                    if(!parsed.stats.analysis) parsed.stats.analysis = { w:0, l:0 };
                     return { ...defaultData, ...parsed };
                 }
                 return defaultData;
@@ -202,7 +214,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_3', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_4', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -356,6 +368,62 @@
                 setPuzzle({ gameType: 'secret', legend, question: questionIcons, options: [targetOption, ...wrongOpts].sort(()=>0.5-Math.random()), targetId: 'correct', instruction: "Terjemahkan kodenya!" });
             };
 
+            const generateAnalysis = (customLevel = null) => {
+                const level = customLevel !== null ? customLevel : userData.analysis.level;
+                let gridSize = 2; // 2x2 = 4 items
+                if (level >= 5) gridSize = 3; // 3x3 = 9 items
+
+                const totalItems = gridSize * gridSize;
+                // Pick one emoji as base
+                const baseIcon = ANALYSIS_EMOJIS[Math.floor(Math.random() * ANALYSIS_EMOJIS.length)];
+                
+                // Determine Difference Type based on level
+                // Lv 1-5: Category/Totally different item (Logic handled by picking different icon)
+                // Lv 6+: Orientation (Rotation)
+                // Lv 16+: Opacity/Filter (Simulated)
+                
+                let targetIcon = baseIcon;
+                let isRotationDiff = false;
+                let isColorDiff = false;
+
+                if (level < 5) {
+                    // Totally different icon
+                    let otherIcons = ANALYSIS_EMOJIS.filter(e => e !== baseIcon);
+                    targetIcon = otherIcons[Math.floor(Math.random() * otherIcons.length)];
+                } else if (level < 15) {
+                    // Rotation Difference
+                    isRotationDiff = true; // Flag to rotate target in CSS
+                } else {
+                    // Color/Opacity Difference
+                    isColorDiff = true; // Flag to filter target in CSS
+                }
+
+                // Create Grid Options
+                const targetIdx = Math.floor(Math.random() * totalItems);
+                const options = [];
+                
+                for(let i=0; i<totalItems; i++) {
+                    const isTarget = (i === targetIdx);
+                    options.push({
+                        id: i,
+                        icon: isTarget ? targetIcon : baseIcon,
+                        isTarget: isTarget,
+                        style: isTarget ? {
+                            transform: isRotationDiff ? 'rotate(90deg)' : 'none',
+                            filter: isColorDiff ? 'hue-rotate(90deg)' : 'none'
+                        } : {}
+                    });
+                }
+
+                setPuzzle({
+                    gameType: 'analysis',
+                    gridSize: gridSize,
+                    options: options,
+                    targetId: targetIdx, // id is index
+                    instruction: "Mana yang beda?"
+                });
+            };
+
             // --- CONTROLLERS ---
             const startGame = (type, mode) => {
                 setActiveGame(type);
@@ -371,6 +439,7 @@
                         case 'block': generateBlock(lv); break;
                         case 'memory': generateMemory(lv); break;
                         case 'secret': generateSecret(lv); break;
+                        case 'analysis': generateAnalysis(lv); break;
                     }
                 }, 50);
             };
@@ -379,24 +448,24 @@
                 if (isDailyDone()) return;
                 setActiveGame('daily');
                 setScreen('game');
-                const games = ['maze', 'block', 'memory', 'secret'];
+                const games = ['maze', 'block', 'memory', 'secret', 'analysis'];
                 const randomType = games[Math.floor(Math.random() * games.length)];
                 
                 setTimeout(() => {
-                    // Daily challenge is slightly harder (Level 15 difficulty equivalent)
+                    // Daily challenge difficulty
                     const diff = 15;
                     switch(randomType) {
                         case 'maze': generateMaze(diff); break;
                         case 'block': generateBlock(diff); break;
                         case 'memory': generateMemory(diff); break;
                         case 'secret': generateSecret(diff); break;
+                        case 'analysis': generateAnalysis(diff); break;
                     }
                 }, 50);
             };
 
             const nextLevel = () => {
                 if(activeGame === 'daily') {
-                    // Should not happen as daily is 1-off, but safe fallback
                     setScreen('menu');
                     return;
                 }
@@ -405,6 +474,7 @@
                     case 'block': generateBlock(); break;
                     case 'memory': generateMemory(); break;
                     case 'secret': generateSecret(); break;
+                    case 'analysis': generateAnalysis(); break;
                 }
             };
 
@@ -466,6 +536,7 @@
                 );
             };
 
+            // PENTAGON RADAR CHART
             const RadarChart = () => {
                 const stats = userData.stats;
                 const getWinRate = (key) => {
@@ -474,30 +545,49 @@
                     return total === 0 ? 0 : (s.w / total);
                 };
 
-                const rates = [getWinRate('maze'), getWinRate('block'), getWinRate('memory'), getWinRate('secret')];
-                // Points: Top, Right, Bottom, Left
-                const center = 100; const radius = 80;
-                const points = [
-                    `${center},${center - (radius * rates[0])}`, // Maze (Top)
-                    `${center + (radius * rates[1])},${center}`, // Block (Right)
-                    `${center},${center + (radius * rates[2])}`, // Memory (Bottom)
-                    `${center - (radius * rates[3])},${center}`  // Secret (Left)
-                ].join(" ");
+                const rates = [
+                    getWinRate('maze'),     // Top
+                    getWinRate('block'),    // Right Top
+                    getWinRate('memory'),   // Right Bottom
+                    getWinRate('secret'),   // Left Bottom
+                    getWinRate('analysis')  // Left Top
+                ];
+
+                // Angles: -90 (Top), -18, 54, 126, 198 (in degrees correction for SVG coord)
+                // Actually simple 360/5 = 72 deg steps starting from top (-90)
+                // 1: -90, 2: -18, 3: 54, 4: 126, 5: 198
+                const angles = [-90, -18, 54, 126, 198];
+                const center = 110; const radius = 80;
+                
+                const points = angles.map((angle, i) => {
+                    const r = radius * rates[i];
+                    const rad = angle * (Math.PI / 180);
+                    const x = center + r * Math.cos(rad);
+                    const y = 100 + r * Math.sin(rad); // 100 is vertical center
+                    return `${x},${y}`;
+                }).join(" ");
 
                 return (
                     <div className="radar-chart-container">
-                        <span className="radar-label top">Navigasi</span>
-                        <span className="radar-label right">Spasial</span>
-                        <span className="radar-label bottom">Memori</span>
-                        <span className="radar-label left">Logika</span>
-                        <svg width="200" height="200" viewBox="0 0 200 200" style={{background:'#1e293b', borderRadius:'50%'}}>
-                            {/* Grid Lines */}
-                            <circle cx="100" cy="100" r="20" fill="none" stroke="#334155" strokeWidth="1"/>
-                            <circle cx="100" cy="100" r="40" fill="none" stroke="#334155" strokeWidth="1"/>
-                            <circle cx="100" cy="100" r="60" fill="none" stroke="#334155" strokeWidth="1"/>
-                            <circle cx="100" cy="100" r="80" fill="none" stroke="#334155" strokeWidth="1"/>
-                            <line x1="100" y1="20" x2="100" y2="180" stroke="#334155" />
-                            <line x1="20" y1="100" x2="180" y2="100" stroke="#334155" />
+                        <span className="radar-label p1">Navigasi</span>
+                        <span className="radar-label p2">Spasial</span>
+                        <span className="radar-label p3">Memori</span>
+                        <span className="radar-label p4">Logika</span>
+                        <span className="radar-label p5">Analisis</span>
+                        <svg width="220" height="200" viewBox="0 0 220 200" style={{background:'#1e293b', borderRadius:'50%'}}>
+                             {/* Background Web (Pentagons) */}
+                            {[20, 40, 60, 80].map(r => {
+                                const pts = angles.map(a => {
+                                    const rad = a * (Math.PI / 180);
+                                    return `${center + r * Math.cos(rad)},${100 + r * Math.sin(rad)}`;
+                                }).join(" ");
+                                return <polygon key={r} points={pts} fill="none" stroke="#334155" strokeWidth="1"/>
+                            })}
+                            {/* Axis Lines */}
+                            {angles.map((a, i) => {
+                                const rad = a * (Math.PI / 180);
+                                return <line key={i} x1={center} y1={100} x2={center + 80*Math.cos(rad)} y2={100 + 80*Math.sin(rad)} stroke="#334155" />
+                            })}
                             {/* Data Poly */}
                             <polygon points={points} fill="rgba(245, 158, 11, 0.5)" stroke="#F59E0B" strokeWidth="2" />
                         </svg>
@@ -510,7 +600,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.3</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.4</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -524,7 +614,7 @@
                         </button>
                     </div>
 
-                    {['maze', 'block', 'memory', 'secret'].map(game => (
+                    {['maze', 'block', 'memory', 'secret', 'analysis'].map(game => (
                         <div key={game} className="game-card">
                             <div className="game-card-title">
                                 <span>{SKILL_NAMES[game]}</span>
@@ -545,7 +635,7 @@
                     <h2 className="text-xl font-bold text-white mb-2 text-center">📊 STATISTIK SKILL</h2>
                     <RadarChart />
                     <div className="grid gap-2 mt-4">
-                        {['maze', 'block', 'memory', 'secret'].map(g => {
+                        {['maze', 'block', 'memory', 'secret', 'analysis'].map(g => {
                             const stats = userData.stats[g];
                             const total = stats.w + stats.l;
                             const rate = total > 0 ? Math.round((stats.w/total)*100) : 0;
@@ -627,6 +717,7 @@
                             <div className="w-full flex flex-col items-center h-full">
                                 <h2 className="instruction-text">{puzzle.instruction}</h2>
                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                    {/* MAZE RENDER */}
                                     {puzzle.gameType === 'maze' && (
                                         <>
                                             <div className="maze-arrows-box">{puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}</div>
@@ -637,6 +728,7 @@
                                             </div>
                                         </>
                                     )}
+                                    {/* BLOCK RENDER */}
                                     {puzzle.gameType === 'block' && (
                                         <div className="block-target-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.gridState.map((status, i) => (
@@ -644,6 +736,7 @@
                                             ))}
                                         </div>
                                     )}
+                                    {/* MEMORY RENDER */}
                                     {puzzle.gameType === 'memory' && (
                                         <>
                                             {puzzle.phase === 'memorize' ? (
@@ -656,6 +749,7 @@
                                             )}
                                         </>
                                     )}
+                                    {/* SECRET RENDER */}
                                     {puzzle.gameType === 'secret' && (
                                         <div className="w-full flex flex-col items-center">
                                             <div className="code-legend">
@@ -664,8 +758,22 @@
                                             <div className="code-question-box">{puzzle.question.map((q, i) => <div key={i} className="question-icon">{q}</div>)}<div className="text-4xl text-white font-bold ml-2">= ?</div></div>
                                         </div>
                                     )}
+                                    {/* ANALYSIS RENDER */}
+                                    {puzzle.gameType === 'analysis' && (
+                                        <div className="analysis-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
+                                            {puzzle.options.map((opt, i) => (
+                                                <button key={i} onClick={() => handleAnswer(opt)}
+                                                    className={`analysis-btn ${wrongId === opt.id ? 'wrong-anim' : ''}`}
+                                                    style={opt.style}>
+                                                    {opt.icon}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                                {!(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
+                                
+                                {/* OPTION GRID (For games that use bottom buttons) */}
+                                {puzzle.gameType !== 'analysis' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                     <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                         {puzzle.options.map((opt, i) => (
                                             <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
