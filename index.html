@@ -37,24 +37,25 @@
         .grid-5x5 .maze-cell { width: 34px; height: 34px; font-size: 1rem; }
         .maze-cell.start { background: #F59E0B; color: white; border-color: #B45309; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); z-index: 10; }
 
-        /* --- BLOCK PUZZLE STYLES (UPDATED) --- */
+        /* --- BLOCK PUZZLE STYLES (ADVANCED) --- */
         .block-target-grid {
-            display: grid; gap: 2px; background: #1e293b; padding: 4px; border-radius: 8px; border: 3px solid #475569; margin-bottom: 20px;
+            display: grid; gap: 3px; background: #1e293b; padding: 5px; border-radius: 12px; border: 3px solid #475569; margin-bottom: 20px;
         }
         .block-target-cell {
-            width: 40px; height: 40px; border-radius: 4px; background: #0F172A; /* Kosong */
+            width: 45px; height: 45px; border-radius: 6px;
         }
-        .block-target-cell.filled { background: #3B82F6; border: 1px solid #2563EB; } /* Terisi biru */
-        .block-target-cell.locked { background: #475569; border: 1px solid #334155; opacity: 0.5; } /* Abu2 mati */
-        .block-target-cell.hole { background: #0F172A; border: 2px dashed #F59E0B; opacity: 0.8; } /* Lubang target */
+        .block-target-cell.filled { border: 1px solid rgba(255,255,255,0.2); }
+        .block-target-cell.locked { background: #475569; border: 1px solid #334155; opacity: 0.4; } 
+        /* Hole sekarang polos gelap, tanpa tanda tanya */
+        .block-target-cell.hole { background: #0F172A; border: 2px dashed #475569; box-shadow: inset 0 0 5px black; }
 
-        /* Shape Preview di Tombol */
-        .shape-preview { display: grid; gap: 2px; pointer-events: none; }
-        .shape-cell { width: 12px; height: 12px; border-radius: 2px; }
-        .shape-cell.active { background: #F59E0B; }
-        .shape-cell.empty { background: transparent; }
+        /* Mini Grid di dalam Tombol Pilihan */
+        .mini-grid { display: grid; gap: 2px; pointer-events: none; }
+        .mini-cell { width: 14px; height: 14px; border-radius: 2px; }
+        .mini-cell.active { background: #F59E0B; box-shadow: inset 0 0 2px rgba(255,255,255,0.5); }
+        .mini-cell.empty { background: transparent; }
 
-        /* BUTTONS & UI */
+        /* UI ELEMENTS */
         .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -87,25 +88,12 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- SHAPE DEFINITIONS (Tetris-like) ---
-        // 1 = filled, 0 = empty. Grid 3x3 max for preview
-        const SHAPES = {
-            'O': [[1,1], [1,1]], // Kotak 2x2
-            'I': [[1], [1], [1]], // Garis Vertikal 3
-            'L': [[1,0], [1,0], [1,1]], // L shape
-            'T': [[1,1,1], [0,1,0]], // T shape
-            'Z': [[1,1,0], [0,1,1]], // Z shape
-            'S': [[0,1,1], [1,1,0]], // S shape
-            'dot': [[1]], // 1 dot
-            'bar2': [[1,1]] // 2 bar horz
-        };
-
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_v23');
+                const saved = localStorage.getItem('jelajah_v24');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (!parsed.maze) return { lives: 3, lastLifeLost: null, maze: { level: 0, score: 0 }, block: { level: 0, score: 0 } };
@@ -119,7 +107,7 @@
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
-            useEffect(() => { localStorage.setItem('jelajah_v23', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_v24', JSON.stringify(userData)); }, [userData]);
 
             useEffect(() => {
                 const timer = setInterval(() => {
@@ -181,78 +169,124 @@
                 });
             };
 
-            // --- BLOCK PUZZLE LOGIC (REAL TETRIS STYLE) ---
+            // --- BLOCK PUZZLE LOGIC (COORDINATE SYSTEM) ---
             const generateBlock = () => {
                 const level = userData.block.level;
-                // Tentukan ukuran grid: 3x3, 4x4, 5x5
+                
+                // Difficulty Settings
                 let gridSize = 3; 
-                let lockedCount = 1; // Jumlah blok mati
+                let missingCount = 2; // Berapa blok yg hilang
+                let isScattered = false; // Apakah blok hilang boleh terpisah?
                 let optionCount = 2;
-                
-                if (level >= 5) { gridSize = 4; lockedCount = 2; optionCount = 3; }
-                if (level >= 15) { gridSize = 4; lockedCount = 4; optionCount = 4; }
-                
-                const totalCells = gridSize * gridSize;
-                let gridState = Array(totalCells).fill('filled'); // Default semua terisi biru
+                let lockedCount = 0;
 
-                // 1. Buat Hole (Target Shape)
-                // Kita ambil random shape dari SHAPES
-                const shapeKeys = Object.keys(SHAPES);
-                const targetShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
-                const targetMatrix = SHAPES[targetShapeKey]; // [[1,1], [1,0]]
+                if (level >= 5) { gridSize = 4; missingCount = 3; lockedCount = 1; optionCount = 3; }
+                if (level >= 10) { gridSize = 4; missingCount = 3; lockedCount = 2; optionCount = 4; isScattered = true; } // SCATTERED START
+                if (level >= 20) { gridSize = 4; missingCount = 4; lockedCount = 3; optionCount = 4; isScattered = true; }
+
+                const totalCells = gridSize * gridSize;
                 
-                // Cari posisi random di grid yang muat shape ini
-                const shapeH = targetMatrix.length;
-                const shapeW = targetMatrix[0].length;
-                
-                const maxR = gridSize - shapeH;
-                const maxC = gridSize - shapeW;
-                
-                const startR = Math.floor(Math.random() * (maxR + 1));
-                const startC = Math.floor(Math.random() * (maxC + 1));
-                
-                // Bolongi grid sesuai shape (tandai sebagai 'hole')
-                for(let r=0; r<shapeH; r++){
-                    for(let c=0; c<shapeW; c++){
-                        if(targetMatrix[r][c] === 1) {
-                            const gridIdx = (startR + r) * gridSize + (startC + c);
-                            gridState[gridIdx] = 'hole';
-                        }
+                // 1. Generate Warna Dasar (Gradient/Pattern)
+                const BASE_PATTERNS = [
+                    'linear-gradient(135deg, #3B82F6, #2563EB)', // Blue
+                    'linear-gradient(135deg, #EF4444, #DC2626)', // Red
+                    'linear-gradient(135deg, #10B981, #059669)', // Green
+                    'linear-gradient(135deg, #F59E0B, #D97706)', // Orange
+                    'linear-gradient(135deg, #8B5CF6, #7C3AED)'  // Purple
+                ];
+                // Pilih 1 pattern utama untuk seluruh grid agar terlihat seperti 1 kesatuan
+                const mainPattern = BASE_PATTERNS[Math.floor(Math.random() * BASE_PATTERNS.length)];
+
+                // 2. Tentukan Posisi Missing (Target)
+                let missingIndices = [];
+                let startIdx = Math.floor(Math.random() * totalCells);
+                missingIndices.push(startIdx);
+
+                // Tambah blok hilang lainnya
+                while(missingIndices.length < missingCount) {
+                    if (isScattered) {
+                        // Random acak (bisa terpisah/spasi)
+                        let nextIdx = Math.floor(Math.random() * totalCells);
+                        if (!missingIndices.includes(nextIdx)) missingIndices.push(nextIdx);
+                    } else {
+                        // Harus nempel (Contiguous / Tetris style)
+                        // Simple random walk
+                        let lastIdx = missingIndices[missingIndices.length-1];
+                        let neighbors = [];
+                        if ((lastIdx + 1) % gridSize !== 0) neighbors.push(lastIdx + 1);
+                        if (lastIdx % gridSize !== 0) neighbors.push(lastIdx - 1);
+                        if (lastIdx + gridSize < totalCells) neighbors.push(lastIdx + gridSize);
+                        if (lastIdx - gridSize >= 0) neighbors.push(lastIdx - gridSize);
+                        
+                        let nextIdx = neighbors[Math.floor(Math.random() * neighbors.length)];
+                        if (!missingIndices.includes(nextIdx)) missingIndices.push(nextIdx);
                     }
                 }
+                missingIndices.sort((a,b) => a-b);
 
-                // 2. Tambah Locked Blocks (Pengganggu)
-                // Cari sel yg masih 'filled' (biru), ubah jadi 'locked' (abu)
-                let availableForLock = gridState.map((s, i) => s === 'filled' ? i : -1).filter(i => i !== -1);
+                // 3. Tentukan Locked Blocks (Yang tidak hilang, tapi mati)
+                let lockedIndices = [];
+                let safeIndices = Array.from({length: totalCells}, (_,i) => i).filter(i => !missingIndices.includes(i));
                 
                 for(let i=0; i<lockedCount; i++){
-                    if(availableForLock.length === 0) break;
-                    const randIdx = Math.floor(Math.random() * availableForLock.length);
-                    const gridIdx = availableForLock[randIdx];
-                    gridState[gridIdx] = 'locked';
-                    availableForLock.splice(randIdx, 1);
+                    if (safeIndices.length === 0) break;
+                    let pick = Math.floor(Math.random() * safeIndices.length);
+                    lockedIndices.push(safeIndices[pick]);
+                    safeIndices.splice(pick, 1);
                 }
 
-                // 3. Generate Options
-                const targetOption = { id: 'correct', shapeMatrix: targetMatrix, isTarget: true };
+                // 4. Build Grid State
+                let gridState = Array(totalCells).fill('filled');
+                missingIndices.forEach(i => gridState[i] = 'hole');
+                lockedIndices.forEach(i => gridState[i] = 'locked');
+
+                // 5. Generate Options
+                // Target Option: Array of indices relative to grid (or boolean map)
+                // Kita akan render opsi berdasarkan 4x4 mini grid.
+                // Jawaban benar = missingIndices
                 
-                // Wrong options: Ambil shape lain yang beda
-                const wrongShapes = shapeKeys.filter(k => k !== targetShapeKey);
-                const wrongOpts = wrongShapes.sort(()=>0.5-Math.random()).slice(0, optionCount - 1).map((k, i) => ({
-                    id: `wrong_${i}`, shapeMatrix: SHAPES[k], isTarget: false
-                }));
+                const targetOption = { 
+                    id: 'correct', 
+                    indices: [...missingIndices], 
+                    isTarget: true 
+                };
+
+                // Pengecoh:
+                // Strategi: Ambil missingIndices, lalu geser atau tambah/kurang blok
+                const wrongOpts = [];
+                for (let i=0; i < optionCount - 1; i++) {
+                    // Buat variasi salah
+                    let fakeIndices = [...missingIndices];
+                    
+                    // Modifikasi acak: Geser 1 blok atau Tambah/Hapus
+                    if (Math.random() > 0.5) {
+                        // Geser salah satu blok
+                        if (fakeIndices.length > 0) {
+                             fakeIndices[0] = (fakeIndices[0] + 1) % totalCells; // Simple shift
+                        }
+                    } else {
+                        // Remove or Add random
+                        if (fakeIndices.length > 1) fakeIndices.pop(); // Remove
+                        else {
+                             // Add random
+                             let r = Math.floor(Math.random() * totalCells);
+                             if (!fakeIndices.includes(r)) fakeIndices.push(r);
+                        }
+                    }
+                    wrongOpts.push({ id: `wrong_${i}`, indices: fakeIndices, isTarget: false });
+                }
 
                 setPuzzle({
                     gameType: 'block',
                     gridSize: gridSize,
-                    gridState: gridState, // Array status sel
+                    gridState: gridState,
+                    gridPattern: mainPattern,
                     options: [targetOption, ...wrongOpts].sort(() => 0.5 - Math.random()),
                     targetId: 'correct',
                     instruction: "Pasang blok yang cocok!"
                 });
             };
 
-            // --- CONTROLLERS ---
             const startGame = (type, mode) => {
                 setActiveGame(type);
                 if (mode === 'new') {
@@ -293,14 +327,20 @@
                 }
             };
 
-            // --- RENDER HELPERS ---
-            const renderShapePreview = (matrix) => {
-                const rows = matrix.length;
-                const cols = matrix[0].length;
+            // Helper render mini grid di tombol
+            const renderOptionGrid = (indices, gridSize, pattern) => {
+                // Selalu render dalam grid 4x4 agar konsisten ukurannya di tombol
+                const displaySize = gridSize; 
+                const cells = Array(displaySize * displaySize).fill(0);
+                indices.forEach(idx => {
+                    if (idx < cells.length) cells[idx] = 1;
+                });
+
                 return (
-                    <div className="shape-preview" style={{gridTemplateColumns: `repeat(${cols}, 1fr)`}}>
-                        {matrix.flat().map((cell, i) => (
-                            <div key={i} className={`shape-cell ${cell===1?'active':'empty'}`} />
+                    <div className="mini-grid" style={{gridTemplateColumns: `repeat(${displaySize}, 1fr)`}}>
+                        {cells.map((val, i) => (
+                            <div key={i} className={`mini-cell ${val===1 ? 'active' : 'empty'}`} 
+                                 style={{background: val===1 ? pattern : 'transparent'}}></div>
                         ))}
                     </div>
                 );
@@ -311,7 +351,7 @@
                     <div className="text-center mt-4 mb-8">
                         <div className="text-6xl mb-2">🧩</div>
                         <h1 className="text-2xl font-black text-white uppercase">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">v23.0 - True Blocks</p>
+                        <p className="text-amber-500 font-bold text-xs uppercase tracking-widest">v24.0 - Advanced Blocks</p>
                         <div className="text-slate-400 text-xs mt-2">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                     </div>
 
@@ -370,8 +410,9 @@
                                     {puzzle.gameType === 'block' && (
                                         <div className="block-target-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.gridState.map((status, i) => (
-                                                <div key={i} className={`block-target-cell ${status}`}>
-                                                    {status === 'hole' ? '?' : ''}
+                                                <div key={i} className={`block-target-cell ${status}`}
+                                                     style={{background: status === 'filled' ? puzzle.gridPattern : ''}}>
+                                                    {/* Tidak ada tanda tanya di sini, hanya lubang kosong */}
                                                 </div>
                                             ))}
                                         </div>
@@ -382,7 +423,7 @@
                                     {puzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
                                             className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
-                                            {puzzle.gameType === 'maze' ? opt.icon : renderShapePreview(opt.shapeMatrix)}
+                                            {puzzle.gameType === 'maze' ? opt.icon : renderOptionGrid(opt.indices, puzzle.gridSize, puzzle.gridPattern)}
                                         </button>
                                     ))}
                                 </div>
@@ -397,7 +438,6 @@
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-7xl mb-4">🌟</div>
                     <h2 className="text-2xl font-bold text-white mb-6">Hebat!</h2>
-                    {/* BUTTON FIX SIZE */}
                     <button onClick={() => { setScreen('game'); nextLevel(); }} className="menu-btn bg-green-600 w-full max-w-[200px] py-3 text-lg">LANJUT LEVEL</button>
                     <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold mt-4 uppercase text-xs">Ke Menu Utama</button>
                 </div>
