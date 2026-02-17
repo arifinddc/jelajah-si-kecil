@@ -20,26 +20,100 @@
             font-family: 'Fredoka', sans-serif; 
             background: #0F172A;
             -webkit-user-select: none; user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #root { height: 100%; width: 100%; }
 
+        /* Container Utama dengan 100dvh untuk Mobile */
         .app-container {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
+            position: absolute; 
+            inset: 0;
+            height: 100dvh; /* Dynamic Height agar tidak terpotong address bar */
+            display: flex; 
+            flex-direction: column;
             background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
-            max-width: 500px; margin: 0 auto;
-            border-left: 2px solid #F59E0B; border-right: 2px solid #F59E0B;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            max-width: 500px; 
+            margin: 0 auto;
+            border-left: 2px solid #F59E0B; 
+            border-right: 2px solid #F59E0B;
+            /* Safe area untuk HP berponi */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* HUD & Menu */
+        /* HUD di atas */
         .hud-bar {
-            height: 70px; flex-shrink: 0;
+            height: 60px; /* Diperkecil sedikit */
+            flex-shrink: 0;
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 1rem; background: rgba(15, 23, 42, 0.95);
             border-bottom: 3px solid #F59E0B; z-index: 20;
         }
+
+        /* Area Game Fleksibel */
+        .game-area {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: space-evenly; /* Distribusi jarak otomatis */
+            padding: 1rem; 
+            width: 100%; 
+            position: relative;
+            overflow: hidden; /* Mencegah scroll yang tidak perlu */
+        }
+
+        /* Target Display (Responsive Size) */
+        .target-wrapper {
+            flex-shrink: 0; /* Jangan mengecil berlebihan */
+            margin-bottom: 1rem;
+            display: flex; justify-content: center; width: 100%;
+        }
+
+        .target-display {
+            width: 25vh; max-width: 140px; aspect-ratio: 1; /* Responsive based on height */
+            background: #1e293b; border: 4px dashed #64748b; border-radius: 1.5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4rem; 
+            animation: float 3s ease-in-out infinite;
+        }
+        .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
+        
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+
+        /* Grid System (Responsive) */
+        .option-grid { 
+            display: grid; 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 360px;
+            /* Agar tombol tidak terlalu tinggi di layar pendek */
+            flex-grow: 0; 
+        }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        
+        .btn-choice {
+            background: white; border: 4px solid #CBD5E1;
+            border-radius: 1rem; 
+            aspect-ratio: 1.2; /* Sedikit lebih gepeng agar muat vertikal */
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; transition: transform 0.1s;
+            box-shadow: 0 4px 0 #94A3B8; color: #0F172A; 
+            width: 100%;
+        }
+        .btn-choice:active { transform: scale(0.95); box-shadow: 0 2px 0 #94A3B8; }
+        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
+        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.5; }
+
+        /* Special Puzzles */
+        .sequence-row { display: flex; gap: 8px; background: #334155; padding: 10px; border-radius: 1rem; border: 2px solid #475569; }
+        .seq-item { width: 45px; height: 45px; background: #1e293b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; }
+        
+        .sudoku-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #F59E0B; padding: 8px; border-radius: 1rem; }
+        .sudoku-cell { width: 55px; height: 55px; background: #334155; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        
+        .count-display { font-size: 3rem; text-align: center; line-height: 1.2; }
 
         .menu-btn {
             width: 100%; background: #F59E0B; color: white;
@@ -48,50 +122,6 @@
             box-shadow: 0 4px 0 #B45309; transition: all 0.1s;
         }
         .menu-btn:active { transform: translateY(4px); box-shadow: none; }
-        .menu-btn.secondary { background: #334155; box-shadow: 0 4px 0 #1e293b; }
-
-        /* Game Elements */
-        .game-area {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 1rem; width: 100%; position: relative;
-        }
-
-        /* Target Display */
-        .target-display {
-            width: 140px; height: 140px;
-            background: #1e293b; border: 4px dashed #64748b; border-radius: 2rem;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 5rem; margin-bottom: 1.5rem;
-            animation: float 3s ease-in-out infinite;
-        }
-        .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
-        
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-
-        /* Grid System */
-        .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; }
-        .grid-2 { grid-template-columns: repeat(2, 1fr); }
-        
-        .btn-choice {
-            background: white; border: 4px solid #CBD5E1;
-            border-radius: 1.2rem; aspect-ratio: 1;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; transition: transform 0.1s;
-            box-shadow: 0 5px 0 #94A3B8; color: #0F172A; position: relative;
-        }
-        .btn-choice:active { transform: scale(0.95); box-shadow: 0 2px 0 #94A3B8; }
-        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 5px 0 #166534; }
-        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 5px 0 #991B1B; opacity: 0.5; }
-
-        /* Special Puzzles */
-        .sequence-row { display: flex; gap: 8px; background: #334155; padding: 10px; border-radius: 1rem; margin-bottom: 1.5rem; border: 2px solid #475569; }
-        .seq-item { width: 50px; height: 50px; background: #1e293b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-        
-        .sudoku-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #F59E0B; padding: 8px; border-radius: 1rem; margin-bottom: 1.5rem; }
-        .sudoku-cell { width: 60px; height: 60px; background: #334155; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-
-        button { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body>
@@ -100,21 +130,19 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- 1. GENERATOR DATABASE MASIF (Procedural Generation) ---
+        // --- 1. GENERATOR DATABASE ---
         const generateDatabase = () => {
             const numbers = Array.from({length: 50}, (_, i) => ({ id: `n${i}`, icon: `${i}`, val: i, type: 'number' }));
             
             const emojis = [
-                { i: "🐱", t: "animal" }, { i: "🐶", t: "animal" }, { i: "🦁", t: "animal" }, { i: "🐯", t: "animal" }, { i: "🐮", t: "animal" }, { i: "🐷", t: "animal" }, { i: "🐸", t: "animal" }, { i: "🐵", t: "animal" }, { i: "🐔", t: "animal" }, { i: "🐧", t: "animal" },
-                { i: "🍎", t: "food" }, { i: "🍌", t: "food" }, { i: "🍇", t: "food" }, { i: "🍉", t: "food" }, { i: "🍓", t: "food" }, { i: "🍒", t: "food" }, { i: "🍍", t: "food" }, { i: "🥥", t: "food" }, { i: "🥝", t: "food" }, { i: "🥑", t: "food" },
-                { i: "🚗", t: "vehicle" }, { i: "🚕", t: "vehicle" }, { i: "🚙", t: "vehicle" }, { i: "🚌", t: "vehicle" }, { i: "🚓", t: "vehicle" }, { i: "🚑", t: "vehicle" }, { i: "🚒", t: "vehicle" }, { i: "🚜", t: "vehicle" }, { i: "🚲", t: "vehicle" }, { i: "🚀", t: "vehicle" },
-                { i: "⚽", t: "sport" }, { i: "🏀", t: "sport" }, { i: "🏈", t: "sport" }, { i: "⚾", t: "sport" }, { i: "🎾", t: "sport" }, { i: "🏐", t: "sport" }, { i: "🏉", t: "sport" }, { i: "🎱", t: "sport" },
-                { i: "⌚", t: "object" }, { i: "📱", t: "object" }, { i: "💻", t: "object" }, { i: "📷", t: "object" }, { i: "📺", t: "object" }, { i: "💡", t: "object" }, { i: "🔦", t: "object" }, { i: "💎", t: "object" },
-                { i: "🔴", t: "color" }, { i: "🔵", t: "color" }, { i: "🟡", t: "color" }, { i: "🟢", t: "color" }, { i: "🟣", t: "color" }, { i: "🟠", t: "color" }, { i: "⚫", t: "color" }, { i: "⚪", t: "color" }
+                { i: "🐱", t: "animal" }, { i: "🐶", t: "animal" }, { i: "🦁", t: "animal" }, { i: "🐸", t: "animal" }, { i: "🐔", t: "animal" },
+                { i: "🍎", t: "food" }, { i: "🍌", t: "food" }, { i: "🍇", t: "food" }, { i: "🍉", t: "food" }, { i: "🍓", t: "food" }, 
+                { i: "🚗", t: "vehicle" }, { i: "🚀", t: "vehicle" }, { i: "🚌", t: "vehicle" }, { i: "🚓", t: "vehicle" },
+                { i: "⚽", t: "sport" }, { i: "🏀", t: "sport" }, { i: "🎾", t: "sport" },
+                { i: "🔴", t: "color" }, { i: "🔵", t: "color" }, { i: "🟡", t: "color" }, { i: "🟢", t: "color" }
             ];
 
             const formattedEmojis = emojis.map((e, idx) => ({ id: `e${idx}`, icon: e.i, type: e.t }));
-
             return { numbers, emojis: formattedEmojis };
         };
 
@@ -123,7 +151,7 @@
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('phi_sage_v14');
+                const saved = localStorage.getItem('phi_sage_v14_1');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
 
@@ -133,13 +161,9 @@
 
             // --- DIFFICULTY CONTROLLER ---
             const getDifficulty = (level) => {
-                // Level 1-5: Intro (Angka 0-10, Objek simpel)
                 if (level < 5) return { maxNum: 10, types: ['match', 'shadow'], distractors: 1 };
-                // Level 6-15: Basic (Angka 0-20, Counting, Sudoku)
                 if (level < 15) return { maxNum: 20, types: ['match', 'shadow', 'count', 'sudoku'], distractors: 3 };
-                // Level 16-30: Intermediate (Sequence, Odd One Out)
                 if (level < 30) return { maxNum: 50, types: ['sequence', 'odd', 'count', 'sudoku'], distractors: 3 };
-                // Level 30+: Master (Semua tipe, Angka besar)
                 return { maxNum: 50, types: ['sequence', 'odd', 'count', 'sudoku', 'match'], distractors: 3 };
             };
 
@@ -150,40 +174,35 @@
                 
                 let target, options = [], meta = {}, instruction = "";
                 
-                // Helper: Ambil random item
                 const getRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
                 const getDistractors = (arr, correctId, count) => arr.filter(a => a.id !== correctId).sort(()=>0.5-Math.random()).slice(0, count);
 
                 if (type === 'match' || type === 'shadow') {
-                    // Cari Sama / Bayangan
                     const pool = [...DB.emojis, ...DB.numbers.slice(0, diff.maxNum)];
                     target = getRand(pool);
                     options = [target, ...getDistractors(pool, target.id, diff.distractors)];
+                    // FIX: Gunakan string biasa, jangan template literal dengan variabel undefined
                     instruction = type === 'match' ? "Cari yang sama persis!" : "Tebak bayangan siapa?";
                 }
                 else if (type === 'count') {
-                    // Berhitung
-                    const num = Math.floor(Math.random() * (diff.maxNum > 10 ? 5 : 3)) + 1; // Count max 5 items for display
+                    const num = Math.floor(Math.random() * (diff.maxNum > 10 ? 4 : 3)) + 1; 
                     const item = getRand(DB.emojis.filter(e => e.type !== 'color'));
                     const iconStr = Array(num).fill(item.icon).join(" ");
                     
-                    target = { id: 'c_true', icon: iconStr, val: num }; // Visual representation
-                    // Options are numbers
+                    target = { id: 'c_true', icon: iconStr, val: num }; 
                     const correctNum = DB.numbers.find(n => n.val === num);
                     options = [correctNum, ...getDistractors(DB.numbers.slice(1, 10), `n${num}`, diff.distractors)];
-                    instruction = "Ada berapa jumlahnya?";
-                    meta = { isCounting: true, display: iconStr }; // Special flag
+                    // FIX: {param} issue resolved here
+                    instruction = `Ada berapa jumlahnya?`; 
+                    meta = { isCounting: true, display: iconStr }; 
                 }
                 else if (type === 'sequence') {
-                    // Pola Angka atau Benda
                     if (Math.random() > 0.5) {
-                        // Angka: 1 2 3 ?
                         const start = Math.floor(Math.random() * (diff.maxNum - 3));
                         target = DB.numbers.find(n => n.val === start + 3);
                         meta = { seq: [start, start+1, start+2, "?"] };
                         options = [target, ...getDistractors(DB.numbers, target.id, diff.distractors)];
                     } else {
-                        // Pola: A B A ?
                         const a = getRand(DB.emojis);
                         const b = getRand(DB.emojis.filter(e => e.id !== a.id));
                         target = b;
@@ -193,19 +212,15 @@
                     instruction = "Apa urutan selanjutnya?";
                 }
                 else if (type === 'odd') {
-                    // Cari yang beda: 3 Kucing, 1 Anjing
                     const cat = getRand(['animal', 'food', 'vehicle', 'sport']);
                     const pool = DB.emojis.filter(e => e.type === cat);
-                    
                     const common = getRand(pool);
                     const odd = getRand(pool.filter(e => e.id !== common.id));
-                    
                     target = odd;
                     options = [common, common, common, odd]; 
                     instruction = "Mana yang paling beda?";
                 }
                 else if (type === 'sudoku') {
-                    // Sudoku 2x2 Warna/Benda
                     const pool = DB.emojis.filter(e => e.type === 'color').sort(()=>0.5-Math.random()).slice(0, 2);
                     const a = pool[0]; const b = pool[1];
                     target = b;
@@ -232,7 +247,7 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            useEffect(() => { localStorage.setItem('phi_sage_v14', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('phi_sage_v14_1', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
                 if (feedback) return;
@@ -245,7 +260,7 @@
                         setUserData(p => ({ ...p, score: newScore, levelIdx: p.levelIdx + 1, streak: p.streak + 1 }));
                         setScreen('result');
                         setFeedback(null);
-                    }, 800);
+                    }, 500); // Dipercepat transisinya
                 } else {
                     setFeedback('wrong');
                     setUserData(p => ({ ...p, lives: Math.max(0, p.lives - 1), streak: 0, lastLifeLost: p.lives===3?Date.now():p.lastLifeLost }));
@@ -253,12 +268,12 @@
                 }
             };
 
-            // --- SCREENS ---
+            // --- RENDERERS ---
             if (screen === 'menu') return (
                 <div className="app-container p-6 justify-center items-center text-center">
                     <div className="text-8xl mb-4 animate-pulse">🧩</div>
-                    <h1 className="text-4xl font-black text-white mb-2 tracking-tighter">AKADEMI SAGE</h1>
-                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-xs">Infinite Puzzle v14.0</p>
+                    <h1 className="text-3xl font-black text-white mb-2 tracking-tighter">AKADEMI SAGE</h1>
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-xs">Responsive v14.1</p>
                     
                     <button onClick={() => { setUserData({...userData, levelIdx: 0, score: 0, lives: 3}); setScreen('game'); setTimeout(generateMission, 100); }} className="menu-btn">
                         MULAI BARU
@@ -274,7 +289,7 @@
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-8xl mb-4 animate-bounce">🌟</div>
                     <h2 className="text-3xl font-bold text-white mb-2">HEBAT!</h2>
-                    <p className="text-slate-400 mb-8">Kamu naik ke Level {userData.levelIdx + 1}</p>
+                    <p className="text-slate-400 mb-8">Level {userData.levelIdx + 1} Selesai</p>
                     <button onClick={() => { setScreen('game'); generateMission(); }} className="menu-btn bg-green-500 shadow-green-700">LANJUT</button>
                     <button onClick={() => setScreen('menu')} className="text-white underline mt-4">Menu Utama</button>
                 </div>
@@ -296,22 +311,27 @@
                             </div>
                         ) : puzzle ? (
                             <>
-                                <h2 className="text-xl font-bold text-white mb-6 text-center">{puzzle.instruction}</h2>
+                                <h2 className="text-xl font-bold text-white mb-4 text-center leading-tight">
+                                    {puzzle.instruction}
+                                </h2>
                                 
-                                <div className="mb-6 flex justify-center w-full">
+                                <div className="target-wrapper">
                                     {puzzle.type === 'sudoku' ? (
                                         <div className="sudoku-grid">{puzzle.meta.grid.map((c,i)=><div key={i} className="sudoku-cell">{c}</div>)}</div>
                                     ) : puzzle.type === 'sequence' ? (
                                         <div className="sequence-row">{puzzle.meta.seq.map((c,i)=><div key={i} className="seq-item text-white">{c}</div>)}</div>
                                     ) : puzzle.meta?.isCounting ? (
-                                        <div className="text-center bg-slate-800 p-4 rounded-2xl border-2 border-slate-600">
-                                            <div className="text-4xl mb-2">{puzzle.meta.display}</div>
+                                        <div className="target-display solid">
+                                            <div className="count-display">{puzzle.meta.display}</div>
                                         </div>
                                     ) : (
+                                        // FIX: Tanda Tanya '?' hanya muncul jika puzzle type bukan 'match'
                                         <div className={`target-display ${puzzle.type==='match'?'solid':''}`}>
                                             {puzzle.type === 'shadow' ? 
                                                 <span className="grayscale brightness-0 opacity-20 text-6xl">{puzzle.target.icon}</span> : 
-                                                <span className="text-6xl">{puzzle.target.icon}</span>}
+                                                // FIX: Jika 'Match', tampilkan icon target, bukan '?'
+                                                (puzzle.type === 'match' ? <span className="text-6xl">{puzzle.target.icon}</span> : <span className="text-6xl animate-pulse">?</span>)
+                                            }
                                         </div>
                                     )}
                                 </div>
