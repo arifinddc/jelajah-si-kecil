@@ -43,64 +43,65 @@
 
         .game-area {
             flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between;
-            padding: 0.75rem; width: 100%; overflow: hidden;
+            align-items: center; justify-content: flex-start; /* Ubah ke top agar maze muat */
+            padding: 1rem; width: 100%; overflow-y: auto; /* Allow scroll if maze is huge */
         }
 
         .instruction-text {
-            font-size: 1.1rem; font-weight: 700; color: #F1F5F9;
-            line-height: 1.2; margin-bottom: 0.25rem; text-align: center;
+            font-size: 1.2rem; font-weight: 700; color: #F1F5F9;
+            margin-bottom: 1rem; text-align: center;
         }
 
-        /* Target Display */
-        .target-wrapper {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            width: 100%; margin: 10px 0;
+        /* MAZE STYLES */
+        .maze-container { 
+            display: flex; flex-direction: column; align-items: center; 
+            width: 100%; flex: 1; justify-content: center;
         }
 
-        .target-display {
-            width: 100px; height: 100px;
-            background: #1e293b; border: 3px dashed #64748b; border-radius: 1.25rem;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; 
-        }
-        .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
-        .target-display.hidden-target { display: none; } 
-
-        /* Enhanced Maze Grid */
-        .maze-container { display: flex; flex-direction: column; align-items: center; }
-        .maze-arrows { 
-            background: #334155; padding: 8px 16px; border-radius: 12px; margin-bottom: 12px;
+        .maze-arrows-box { 
+            background: #334155; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px;
             font-size: 1.8rem; border: 2px solid #64748b; color: #F59E0B;
-            box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.5rem;
+            box-shadow: 0 4px 0 #1e293b; letter-spacing: 0.5rem; text-align: center;
+            max-width: 90%; flex-wrap: wrap; display: flex; justify-content: center;
         }
+
         .maze-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-            background: #1E293B; padding: 8px; border-radius: 16px; border: 3px solid #475569;
+            display: grid; gap: 4px;
+            background: #1E293B; padding: 6px; border-radius: 16px; border: 3px solid #475569;
+            margin-bottom: 1rem;
         }
+
         .maze-cell {
-            width: 40px; height: 40px; background: #0F172A; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            color: #475569; font-weight: bold; border: 1px solid #334155;
+            width: 45px; height: 45px; background: #0F172A; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            color: #64748B; font-weight: bold; border: 1px solid #334155;
+            transition: all 0.2s;
         }
-        .maze-cell.start { background: #F59E0B; color: white; border-color: #B45309; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
+        
+        /* Ukuran cell mengecil jika grid membesar */
+        .grid-4x4 .maze-cell { width: 40px; height: 40px; font-size: 1.2rem; }
+        .grid-5x5 .maze-cell { width: 34px; height: 34px; font-size: 1rem; }
+
+        .maze-cell.start { 
+            background: #F59E0B; color: white; border-color: #B45309; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2); 
+        }
 
         /* Option Grid */
         .option-grid { 
-            display: grid; gap: 8px; width: 100%; max-width: 340px; margin-bottom: 0.5rem;
+            display: grid; gap: 8px; width: 100%; max-width: 360px; margin-top: auto;
         }
-        .grid-2 { grid-template-columns: repeat(2, 1fr); }
-        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
         
         .btn-choice {
             background: white; border: 3px solid #CBD5E1; border-radius: 1rem; 
-            aspect-ratio: 1.4; display: flex; align-items: center; justify-content: center;
-            font-size: 2.2rem; transition: transform 0.1s;
+            aspect-ratio: 1.5; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; transition: transform 0.1s;
             box-shadow: 0 4px 0 #94A3B8; color: #0F172A; width: 100%; position: relative;
         }
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 1px 0 #94A3B8; }
-        .grid-3 .btn-choice { aspect-ratio: 1.2; font-size: 1.8rem; }
-
+        
         /* Feedback States */
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
@@ -126,141 +127,105 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- DATABASE FIXED ---
-        const generateDB = () => {
-            const numbers = Array.from({length: 101}, (_, i) => ({ id: `n${i}`, icon: `${i}`, val: i, type: 'number' }));
-            
-            // Emoji List dengan ID Eksplisit agar tidak null
-            const emojis = [
-                { i: "🐱", t: "animal", id:"e_cat" }, { i: "🐶", t: "animal", id:"e_dog" }, { i: "🦁", t: "animal", id:"e_lion" }, { i: "🐸", t: "animal", id:"e_frog" },
-                { i: "🍎", t: "food", id:"e_apple" }, { i: "🍌", t: "food", id:"e_banana" }, { i: "🍇", t: "food", id:"e_grape" }, { i: "🍕", t: "food", id:"e_pizza" },
-                { i: "🚗", t: "vehicle", id:"e_car" }, { i: "🚀", t: "vehicle", id:"e_rocket" }, { i: "✈️", t: "vehicle", id:"e_plane" },
-                { i: "⚽", t: "sport", id:"e_ball" }, { i: "🏀", t: "sport", id:"e_basket" },
-                { i: "🔴", t: "color", id:"c_red" }, { i: "🔵", t: "color", id:"c_blue" }, { i: "🟡", t: "color", id:"c_yellow" }, { i: "🟢", t: "color", id:"c_green" },
-                
-                // Pairs Fixed (Two-way Reference)
-                { i: "🌧️", t: "weather", id:"e_rain", pair: "e_umbrella" }, { i: "🌂", t: "object", id:"e_umbrella", pair: "e_rain" },
-                { i: "🔒", t: "object", id:"e_lock", pair: "e_key" }, { i: "🔑", t: "object", id:"e_key", pair: "e_lock" },
-                { i: "🦷", t: "body", id:"e_tooth", pair: "e_brush" }, { i: "🪥", t: "object", id:"e_brush", pair: "e_tooth" },
-                { i: "👞", t: "clothes", id:"e_shoe", pair: "e_sock" }, { i: "🧦", t: "clothes", id:"e_sock", pair: "e_shoe" }
-            ];
-            return { numbers, emojis };
-        };
-
-        const DB = generateDB();
-
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_v18');
+                const saved = localStorage.getItem('jelajah_maze_v19');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
             const [puzzle, setPuzzle] = useState(null);
             const [feedback, setFeedback] = useState(null);
-            const [wrongId, setWrongId] = useState(null); // Track tombol yg salah
+            const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
 
+            // --- DIFFICULTY LOGIC (Hanya Maze) ---
             const getDifficulty = (level) => {
-                if (level < 10) return { maxNum: 20, types: ['match', 'shadow', 'count', 'pair', 'maze'], options: 4 };
-                if (level < 25) return { maxNum: 50, types: ['match', 'count', 'pair', 'maze', 'sequence', 'odd', 'sudoku'], options: 4 };
-                return { maxNum: 100, types: ['match', 'count', 'pair', 'maze', 'sequence', 'odd', 'sudoku'], options: 6 };
+                // Level 0-4: Grid 3x3, 2 Langkah (Sangat Mudah)
+                if (level < 5) return { gridSize: 3, steps: 2, options: 2 };
+                // Level 5-9: Grid 3x3, 3 Langkah (Mudah)
+                if (level < 10) return { gridSize: 3, steps: 3, options: 3 };
+                // Level 10-19: Grid 4x4, 3-4 Langkah (Sedang)
+                if (level < 20) return { gridSize: 4, steps: Math.random() > 0.5 ? 3 : 4, options: 4 };
+                // Level 20-29: Grid 4x4, 4-5 Langkah (Menantang)
+                if (level < 30) return { gridSize: 4, steps: Math.floor(Math.random() * 2) + 4, options: 4 };
+                // Level 30+: Grid 5x5, 5-7 Langkah (Master)
+                return { gridSize: 5, steps: Math.floor(Math.random() * 3) + 5, options: 6 };
             };
 
-            const generateMission = () => {
+            const generateMaze = () => {
                 const diff = getDifficulty(userData.levelIdx);
-                const type = diff.types[Math.floor(Math.random() * diff.types.length)];
+                const size = diff.gridSize;
+                const totalCells = size * size;
                 
-                let target, options = [], meta = {}, instruction = "";
-                const getRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+                // Labels: A, B, C... sampai Y (25 huruf)
+                const labels = "ABCDEFGHIJKLMNOPQRSTUVWXY".split("").slice(0, totalCells);
                 
-                // SAFE DISTRACTOR GENERATOR
-                const getDist = (arr, excludeIds, count) => {
-                    // Filter item yang valid (tidak null/undefined) dan bukan target
-                    const validItems = arr.filter(a => a && a.id && !excludeIds.includes(a.id));
-                    return validItems.sort(()=>0.5-Math.random()).slice(0, count);
-                };
+                // Logic Pathfinding
+                // Start selalu di 0 (Pojok Kiri Atas) untuk konsistensi anak-anak
+                // Atau bisa diacak di masa depan, tapi sekarang kita kunci di 0 biar ga bingung
+                let currentPos = 0;
+                let pathHistory = [0]; // Simpan jejak agar tidak bolak balik instan
+                let arrowSequence = [];
 
-                // 1. MATCH / SHADOW
-                if (type === 'match' || type === 'shadow') {
-                    const pool = [...DB.emojis, ...DB.numbers.slice(0, diff.maxNum)];
-                    target = getRand(pool);
-                    options = [target, ...getDist(pool, [target.id], diff.options - 1)];
-                    instruction = type === 'match' ? "Cari yang sama persis!" : "Tebak bayangan siapa?";
-                } 
-                // 2. PAIRS (FIXED)
-                else if (type === 'pair') {
-                    const pairs = DB.emojis.filter(e => e.pair);
-                    const q = getRand(pairs);
-                    // Pastikan pairnya ada di DB
-                    const ans = DB.emojis.find(e => e.id === q.pair);
-                    
-                    if (!ans) { // Fallback jika error, ganti ke match game
-                        return generateMission(); 
+                for (let i = 0; i < diff.steps; i++) {
+                    let possibleMoves = [];
+
+                    // Cek Kanan
+                    if ((currentPos + 1) % size !== 0) {
+                        if (pathHistory[pathHistory.length-2] !== currentPos + 1) // Cegah balik langsung
+                            possibleMoves.push({ move: 1, icon: '➡️' });
+                    }
+                    // Cek Bawah
+                    if (currentPos + size < totalCells) {
+                        if (pathHistory[pathHistory.length-2] !== currentPos + size)
+                            possibleMoves.push({ move: size, icon: '⬇️' });
+                    }
+                    // Cek Kiri (Hanya jika grid > 3 atau level tinggi biar variatif)
+                    if (currentPos % size !== 0 && userData.levelIdx > 10) {
+                         if (pathHistory[pathHistory.length-2] !== currentPos - 1)
+                            possibleMoves.push({ move: -1, icon: '⬅️' });
+                    }
+                    // Cek Atas
+                    if (currentPos - size >= 0 && userData.levelIdx > 10) {
+                         if (pathHistory[pathHistory.length-2] !== currentPos - size)
+                            possibleMoves.push({ move: -size, icon: '⬆️' });
                     }
 
-                    target = ans;
-                    meta = { display: q.icon };
-                    options = [ans, ...getDist(DB.emojis, [q.id, ans.id], diff.options - 1)];
-                    instruction = "Apa pasangannya?";
-                }
-                // 3. MAZE (Enhanced)
-                else if (type === 'maze') {
-                    const steps = diff.options > 4 ? 3 : 2; 
-                    let pos = 0, pathIcons = [];
-                    for(let i=0; i<steps; i++) {
-                        const canGoRight = (pos % 3) !== 2;
-                        const canGoDown = pos < 6;
-                        if (canGoRight && canGoDown) {
-                            if (Math.random() > 0.5) { pos += 1; pathIcons.push("➡️"); } else { pos += 3; pathIcons.push("⬇️"); }
-                        } else if (canGoRight) { pos += 1; pathIcons.push("➡️"); } 
-                        else { pos += 3; pathIcons.push("⬇️"); }
-                    }
-                    const labels = ["A","B","C","D","E","F","G","H","I"];
-                    target = { id: `pos_${pos}`, icon: labels[pos] };
-                    const wrongOpts = [0,1,2,3,4,5,6,7,8].filter(i => i !== pos).sort(()=>0.5-Math.random()).slice(0, diff.options - 1).map(i => ({ id: `pos_${i}`, icon: labels[i] }));
-                    options = [target, ...wrongOpts];
-                    instruction = "Ikuti panah! Kemana sampainya?";
-                    meta = { isMaze: true, arrows: pathIcons, labels };
-                }
-                // 4. COUNT
-                else if (type === 'count') {
-                    const num = Math.floor(Math.random() * 5) + 1;
-                    const item = getRand(DB.emojis.filter(e => e.type !== 'color'));
-                    const iconStr = Array(num).fill(item.icon).join("");
-                    target = { id: 'c_t', val: num };
-                    const correctNumObj = DB.numbers.find(n => n.val === num);
-                    options = [correctNumObj, ...getDist(DB.numbers.slice(1, 10), [`n${num}`], diff.options - 1)];
-                    instruction = "Ada berapa jumlahnya?";
-                    meta = { isCount: true, display: iconStr };
-                }
-                // 5. ODD
-                else if (type === 'odd') {
-                    const cat = getRand(['animal', 'food', 'vehicle']);
-                    const pool = DB.emojis.filter(e => e.type === cat);
-                    const common = getRand(pool);
-                    const odd = getRand(pool.filter(e => e.id !== common.id));
-                    target = odd;
-                    options = [...Array(diff.options - 1).fill(common), odd];
-                    instruction = "Mana yang paling beda?";
-                }
-                // 6. SUDOKU & SEQUENCE
-                else if (type === 'sudoku') {
-                    const cols = DB.emojis.filter(e => e.type === 'color').sort(()=>0.5-Math.random());
-                    target = cols[1]; meta = { grid: [cols[0].icon, cols[1].icon, cols[1].icon, "?"] };
-                    options = [cols[1], ...getDist(DB.emojis.filter(e => e.type === 'color'), [cols[1].id], diff.options - 1)];
-                    instruction = "Warna kotak tidak boleh sama!";
-                }
-                else if (type === 'sequence') {
-                    const a = getRand(DB.emojis); const b = getRand(DB.emojis.filter(e => e.id !== a.id));
-                    target = b; meta = { seq: [a.icon, b.icon, a.icon, "?"] };
-                    options = [b, ...getDist(DB.emojis, [a.id, b.id], diff.options - 1)];
-                    instruction = "Apa urutan selanjutnya?";
+                    // Jika terjebak (jarang terjadi di grid open), ambil sembarang valid
+                    if (possibleMoves.length === 0) break;
+
+                    const selected = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                    currentPos += selected.move;
+                    pathHistory.push(currentPos);
+                    arrowSequence.push(selected.icon);
                 }
 
-                // Final Check: Ensure no option is undefined
-                if (options.some(o => !o || !o.icon)) return generateMission();
+                const targetIndex = currentPos;
+                const targetLabel = labels[targetIndex];
 
-                setPuzzle({ type, target, options: options.sort(()=>0.5-Math.random()), meta, instruction });
+                // Generate Options
+                const targetOption = { id: `pos_${targetIndex}`, icon: targetLabel, isTarget: true };
+                
+                // Distractors: Ambil huruf lain selain target
+                const otherIndices = Array.from({length: totalCells}, (_, i) => i).filter(i => i !== targetIndex);
+                const randomWrong = otherIndices.sort(() => 0.5 - Math.random()).slice(0, diff.options - 1);
+                
+                const wrongOptions = randomWrong.map(idx => ({
+                    id: `pos_${idx}`,
+                    icon: labels[idx],
+                    isTarget: false
+                }));
+
+                const finalOptions = [targetOption, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+                setPuzzle({
+                    gridSize: size,
+                    labels: labels,
+                    arrows: arrowSequence,
+                    options: finalOptions,
+                    targetId: targetOption.id,
+                    startIndex: 0 // Start position
+                });
             };
 
             // --- SYSTEM ---
@@ -275,40 +240,32 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            useEffect(() => { localStorage.setItem('jelajah_v18', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_maze_v19', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
-                if (feedback === 'correct') return; // Prevent spam click on correct
+                if (feedback === 'correct') return;
 
-                let isCorrect = false;
-                if (puzzle.type === 'count') isCorrect = opt.val === puzzle.target.val;
-                else if (puzzle.type === 'odd') isCorrect = opt.id === puzzle.target.id;
-                else isCorrect = opt.id === puzzle.target.id;
-
-                if (isCorrect) {
+                if (opt.isTarget) {
                     setFeedback('correct');
-                    setWrongId(null); // Reset wrong state
+                    setWrongId(null);
                     setTimeout(() => {
                         setUserData(p => ({ ...p, score: p.score+10, levelIdx: p.levelIdx+1, streak: p.streak+1 }));
                         setScreen('result'); setFeedback(null);
                     }, 500);
                 } else {
-                    // Logic Fix: Hanya tandai tombol ini sebagai salah, JANGAN kasih tau yg benar
-                    setWrongId(opt.id); 
+                    setWrongId(opt.id);
                     setUserData(p => ({ ...p, lives: Math.max(0, p.lives-1), streak: 0, lastLifeLost: p.lives===3?Date.now():p.lastLifeLost }));
-                    
-                    // Hilangkan status merah setelah sebentar
                     setTimeout(() => setWrongId(null), 500);
                 }
             };
 
             if (screen === 'menu') return (
                 <div className="app-container p-6 justify-center items-center text-center">
-                    <div className="text-7xl mb-4">🧩</div>
-                    <h1 className="text-3xl font-black text-white mb-2 uppercase">Jelajah Si Kecil</h1>
-                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Fixed v18.0</p>
-                    <button onClick={() => { setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); setScreen('game'); setTimeout(generateMission, 50); }} className="menu-btn">MULAI BARU</button>
-                    <button onClick={() => { setScreen('game'); setTimeout(generateMission, 50); }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>LANJUTKAN (Lv {userData.levelIdx+1})</button>
+                    <div className="text-7xl mb-4">🧭</div>
+                    <h1 className="text-3xl font-black text-white mb-2 uppercase">Labirin Si Kecil</h1>
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Fokus Panah v19.0</p>
+                    <button onClick={() => { setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); setScreen('game'); setTimeout(generateMaze, 50); }} className="menu-btn">MULAI BARU</button>
+                    <button onClick={() => { setScreen('game'); setTimeout(generateMaze, 50); }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>LANJUTKAN (Lv {userData.levelIdx+1})</button>
                     <div className="text-slate-500 text-xs mt-4">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                 </div>
             );
@@ -316,8 +273,8 @@
             if (screen === 'result') return (
                 <div className="app-container p-6 justify-center items-center text-center bg-slate-900">
                     <div className="text-7xl mb-4">🌟</div>
-                    <h2 className="text-2xl font-bold text-white mb-6">Hebat Sekali!</h2>
-                    <button onClick={() => { setScreen('game'); generateMission(); }} className="menu-btn bg-green-600">LANJUT</button>
+                    <h2 className="text-2xl font-bold text-white mb-6">Luar Biasa!</h2>
+                    <button onClick={() => { setScreen('game'); generateMaze(); }} className="menu-btn bg-green-600">LANJUT LEVEL</button>
                     <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold mt-2 uppercase text-xs">Ke Menu Utama</button>
                 </div>
             );
@@ -331,45 +288,33 @@
                     </div>
                     <div className="game-area">
                         {userData.lives <= 0 ? (
-                            <div className="text-center"><h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2><button onClick={() => setScreen('menu')} className="menu-btn">Kembali</button></div>
+                            <div className="text-center mt-20"><h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2><button onClick={() => setScreen('menu')} className="menu-btn">Kembali</button></div>
                         ) : puzzle ? (
-                            <>
-                                <h2 className="instruction-text">{puzzle.instruction}</h2>
-                                <div className="target-wrapper">
-                                    {puzzle.type === 'sudoku' ? (
-                                        <div className="grid grid-cols-2 gap-2 bg-amber-500 p-2 rounded-xl">{puzzle.meta.grid.map((c,i)=><div key={i} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl">{c}</div>)}</div>
-                                    ) : puzzle.type === 'sequence' ? (
-                                        <div className="flex gap-2 bg-slate-800 p-3 rounded-xl border border-slate-600">{puzzle.meta.seq.map((c,i)=><div key={i} className={`w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-xl text-white ${c==='?'?'animate-pulse text-amber-400':''}`}>{c}</div>)}</div>
-                                    ) : puzzle.meta?.isCount ? (
-                                        <div className="target-display solid text-3xl text-center px-2">{puzzle.meta.display}</div>
-                                    ) : puzzle.meta?.isMaze ? (
-                                        <div className="maze-container">
-                                            <div className="maze-arrows">{puzzle.meta.arrows.join("  ")}</div>
-                                            <div className="maze-grid">
-                                                {puzzle.meta.labels.map((l,i) => <div key={i} className={`maze-cell ${i===0?'start':''}`}>{i===0?'🐱':l}</div>)}
-                                            </div>
-                                        </div>
-                                    ) : puzzle.type === 'pair' ? (
-                                        <div className="target-display solid">{puzzle.meta.display}</div>
-                                    ) : (
-                                        <div className={`target-display ${puzzle.type==='match'?'solid':''} ${puzzle.type==='odd'?'hidden-target':''}`}>
-                                            {puzzle.type === 'shadow' ? <span className="grayscale brightness-0 opacity-10">{puzzle.target.icon}</span> : <span>{puzzle.target.icon}</span>}
-                                        </div>
-                                    )}
+                            <div className="maze-container w-full h-full">
+                                <h2 className="instruction-text">Ikuti panah! Kemana sampainya?</h2>
+                                
+                                <div className="maze-arrows-box">
+                                    {puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}
                                 </div>
-                                <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-3' : 'grid-2'}`}>
+
+                                <div className={`maze-grid grid-${puzzle.gridSize}`} 
+                                     style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
+                                    {puzzle.labels.map((l, i) => (
+                                        <div key={i} className={`maze-cell ${i===puzzle.startIndex ? 'start' : ''} ${puzzle.gridSize===4?'text-sm':''} ${puzzle.gridSize===5?'text-xs':''}`}>
+                                            {i===puzzle.startIndex ? '🐱' : l}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                     {puzzle.options.map((opt, i) => (
                                         <button key={i} onClick={() => handleAnswer(opt)} 
-                                            /* LOGIC FEEDBACK FIX: Hanya nyalakan 'correct' jika feedback global 'correct'. Jika salah, nyalakan 'wrong' hanya pada tombol yg diklik */
-                                            className={`btn-choice 
-                                                ${feedback==='correct' && ((opt.id===puzzle.target.id) || (puzzle.type==='count' && opt.val===puzzle.target.val)) ? 'correct' : ''} 
-                                                ${wrongId === opt.id ? 'wrong' : ''}
-                                            `}>
+                                            className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
                                             {opt.icon}
                                         </button>
                                     ))}
                                 </div>
-                            </>
+                            </div>
                         ) : null}
                     </div>
                 </div>
