@@ -41,10 +41,10 @@
         }
 
         .hud-bar {
-            height: 55px; 
+            height: 60px; 
             flex-shrink: 0;
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 1rem; background: rgba(15, 23, 42, 0.95);
+            padding: 0 0.75rem; background: rgba(15, 23, 42, 0.95);
             border-bottom: 3px solid #F59E0B; z-index: 20;
         }
 
@@ -60,28 +60,26 @@
         }
 
         .instruction-text {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #F1F5F9;
             line-height: 1.2;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.25rem;
+            text-align: center;
         }
 
-        /* Target Display diperkecil agar tidak memakan tempat */
         .target-display {
-            width: 110px; height: 110px;
+            width: 100px; height: 100px;
             background: #1e293b; border: 3px dashed #64748b; border-radius: 1.25rem;
             display: flex; align-items: center; justify-content: center;
-            font-size: 3.5rem; 
+            font-size: 3rem; 
             margin: 0.5rem 0;
         }
         .target-display.solid { border-style: solid; border-color: #F59E0B; background: #334155; }
 
-        /* Grid Jawaban diperkecil kotaknya */
         .option-grid { 
             display: grid; 
-            gap: 10px; 
+            gap: 8px; 
             width: 100%; 
             max-width: 320px;
             margin-bottom: 0.5rem;
@@ -91,9 +89,9 @@
         .btn-choice {
             background: white; border: 3px solid #CBD5E1;
             border-radius: 1rem; 
-            aspect-ratio: 1.35; /* Lebih pipih agar muat secara vertikal */
+            aspect-ratio: 1.4; 
             display: flex; align-items: center; justify-content: center;
-            font-size: 2.25rem; transition: transform 0.1s;
+            font-size: 2.2rem; transition: transform 0.1s;
             box-shadow: 0 4px 0 #94A3B8; color: #0F172A; 
             width: 100%;
         }
@@ -106,6 +104,18 @@
             padding: 1rem; margin-bottom: 0.8rem;
             border-radius: 1rem; font-size: 1.2rem; font-weight: bold;
             box-shadow: 0 4px 0 #B45309; transition: all 0.1s;
+        }
+        .menu-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #B45309; }
+
+        /* Small Home Button in Game HUD */
+        .home-icon-btn {
+            background: #334155;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #F59E0B;
+            border: 1px solid #475569;
         }
     </style>
 </head>
@@ -130,7 +140,7 @@
         const App = () => {
             const [screen, setScreen] = useState('menu');
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_si_kecil_save');
+                const saved = localStorage.getItem('jelajah_si_kecil_v15_1');
                 return saved ? JSON.parse(saved) : { score: 0, lives: 3, levelIdx: 0, streak: 0, lastLifeLost: null };
             });
             const [puzzle, setPuzzle] = useState(null);
@@ -186,14 +196,14 @@
                 const timer = setInterval(() => {
                     if (userData.lives < 3 && userData.lastLifeLost) {
                         const diff = Date.now() - userData.lastLifeLost;
-                        if (diff >= 600000) setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1<3?Date.now():null }));
+                        if (diff >= 600000) setUserData(p => ({ ...p, lives: Math.min(p.lives + 1, 3), lastLifeLost: p.lives+1 < 3 ? Date.now() : null }));
                         else setRegenTimer(`${Math.floor((600000-diff)/60000)}:${Math.floor(((600000-diff)%60000)/1000).toString().padStart(2,'0')}`);
                     } else setRegenTimer("");
                 }, 1000);
                 return () => clearInterval(timer);
             }, [userData]);
 
-            useEffect(() => { localStorage.setItem('jelajah_si_kecil_save', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_si_kecil_v15_1', JSON.stringify(userData)); }, [userData]);
 
             const handleAnswer = (opt) => {
                 if (feedback) return;
@@ -212,12 +222,24 @@
 
             if (screen === 'menu') return (
                 <div className="app-container p-6 justify-center items-center text-center">
-                    <div className="text-8xl mb-4">🧩</div>
+                    <div className="text-7xl mb-4">🧩</div>
                     <h1 className="text-3xl font-black text-white mb-2 uppercase">Jelajah Si Kecil</h1>
-                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-xs">Versi 15.0</p>
-                    <button onClick={() => { setUserData({...userData, levelIdx:0, score:0, lives:3}); setScreen('game'); setTimeout(generateMission, 50); }} className="menu-btn">MULAI BARU</button>
-                    <button onClick={() => { setScreen('game'); setTimeout(generateMission, 50); }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>LANJUTKAN</button>
-                    <div className="text-slate-500 text-xs mt-4">Energi: {userData.lives}/3 • {regenTimer}</div>
+                    <p className="text-amber-500 mb-8 font-bold uppercase tracking-widest text-[10px]">Edisi Cerdas v15.1</p>
+                    
+                    <button onClick={() => { 
+                        setUserData({...userData, levelIdx:0, score:0, lives:3, streak:0, lastLifeLost:null}); 
+                        setScreen('game'); 
+                        setTimeout(generateMission, 50); 
+                    }} className="menu-btn">MULAI BARU</button>
+                    
+                    <button onClick={() => { 
+                        setScreen('game'); 
+                        setTimeout(generateMission, 50); 
+                    }} className={`menu-btn bg-slate-700 ${userData.levelIdx===0?'opacity-50':''}`}>
+                        LANJUTKAN - Level {userData.levelIdx + 1}
+                    </button>
+                    
+                    <div className="text-slate-500 text-xs mt-4">Energi: {userData.lives}/3 {regenTimer && `(${regenTimer})`}</div>
                 </div>
             );
 
@@ -226,27 +248,46 @@
                     <div className="text-7xl mb-4">🌟</div>
                     <h2 className="text-2xl font-bold text-white mb-6">Pintar Sekali!</h2>
                     <button onClick={() => { setScreen('game'); generateMission(); }} className="menu-btn bg-green-600">LANJUT</button>
+                    <button onClick={() => setScreen('menu')} className="text-slate-500 font-bold mt-2 uppercase text-xs">Ke Menu Utama</button>
                 </div>
             );
 
             return (
                 <div className="app-container">
                     <div className="hud-bar">
-                        <div className="flex flex-col items-center"><span className="text-xl">❤️ {userData.lives}</span><span className="text-[9px] text-amber-500">{regenTimer}</span></div>
-                        <div className="text-center"><span className="text-xs text-slate-400 font-bold uppercase">Level {userData.levelIdx + 1}</span></div>
-                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm">⭐ {userData.score}</div>
+                        <div className="flex flex-col items-center">
+                            <span className="text-xl">❤️ {userData.lives}</span>
+                            <span className="text-[8px] text-amber-500 font-bold">{regenTimer}</span>
+                        </div>
+                        
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Level {userData.levelIdx + 1}</span>
+                            <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
+                        </div>
+
+                        <div className="bg-amber-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow-sm">
+                            ⭐ {userData.score}
+                        </div>
                     </div>
+
                     <div className="game-area">
                         {userData.lives <= 0 ? (
-                            <div className="text-center"><h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2><button onClick={() => setScreen('menu')} className="menu-btn">Kembali</button></div>
+                            <div className="text-center">
+                                <h2 className="text-xl text-white font-bold mb-4">Energi Habis!</h2>
+                                <button onClick={() => setScreen('menu')} className="menu-btn">Kembali ke Menu</button>
+                            </div>
                         ) : puzzle ? (
                             <>
                                 <h2 className="instruction-text">{puzzle.instruction}</h2>
                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
                                     {puzzle.type === 'sudoku' ? (
-                                        <div className="grid grid-cols-2 gap-2 bg-amber-500 p-2 rounded-xl">{puzzle.meta.grid.map((c,i)=><div key={i} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl">{c}</div>)}</div>
+                                        <div className="grid grid-cols-2 gap-2 bg-amber-500 p-2 rounded-xl">
+                                            {puzzle.meta.grid.map((c,i)=><div key={i} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-2xl">{c}</div>)}
+                                        </div>
                                     ) : puzzle.type === 'sequence' ? (
-                                        <div className="flex gap-2 bg-slate-800 p-3 rounded-xl border border-slate-600">{puzzle.meta.seq.map((c,i)=><div key={i} className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-xl text-white">{c}</div>)}</div>
+                                        <div className="flex gap-2 bg-slate-800 p-3 rounded-xl border border-slate-600">
+                                            {puzzle.meta.seq.map((c,i)=><div key={i} className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-xl text-white">{c}</div>)}
+                                        </div>
                                     ) : puzzle.meta?.isCount ? (
                                         <div className="target-display solid text-3xl">{puzzle.meta.display}</div>
                                     ) : (
@@ -257,7 +298,10 @@
                                 </div>
                                 <div className={`option-grid grid-2`}>
                                     {puzzle.options.map((opt, i) => (
-                                        <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && (opt.id===puzzle.target.id || opt.val===puzzle.target.val) ? 'correct' : ''} ${feedback==='wrong' && opt.id!==puzzle.target.id ? 'wrong' : ''}`}>{opt.icon}</button>
+                                        <button key={i} onClick={() => handleAnswer(opt)} 
+                                            className={`btn-choice ${feedback==='correct' && (opt.id===puzzle.target.id || opt.val===puzzle.target.val) ? 'correct' : ''} ${feedback==='wrong' && opt.id!==puzzle.target.id ? 'wrong' : ''}`}>
+                                            {opt.icon}
+                                        </button>
                                     ))}
                                 </div>
                             </>
