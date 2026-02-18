@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.8</title>
+    <title>Jelajah Si Kecil - Beta v1.8.1</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -95,18 +95,6 @@
         .scale-item { font-size: 1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } 
         .scale-slot { width: 28px; height: 28px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
 
-        /* Atensi (Radar Fokus) */
-        .attention-area { position: relative; width: 300px; height: 300px; border: 4px solid #334155; border-radius: 50%; background: #0F172A; overflow: hidden; margin: 0 auto; box-shadow: inset 0 0 30px rgba(0,0,0,0.5); }
-        .attention-target { position: absolute; font-size: 2.5rem; transition: all 0.1s; cursor: pointer; user-select: none; animation: popIn 0.2s; }
-        .attention-target:active { transform: scale(0.9); }
-
-        /* Perencanaan (Pipa) */
-        .pipe-grid { display: grid; gap: 0; background: #334155; padding: 4px; border-radius: 8px; margin: 0 auto; }
-        .pipe-cell { width: 50px; height: 50px; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid #475569; color: #64748B; cursor: pointer; transition: transform 0.2s; }
-        .pipe-cell.connected { color: #3B82F6; text-shadow: 0 0 5px #3B82F6; }
-        .pipe-cell.start { background: #3B82F6; color: white; }
-        .pipe-cell.end { background: #F59E0B; color: white; }
-
         /* UI Common */
         .option-grid { display: grid; gap: 8px; width: 100%; max-width: 340px; margin-top: auto; margin-bottom: 10px; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
@@ -115,7 +103,7 @@
         
         .btn-choice { 
             background: white; border: 2px solid #CBD5E1; border-radius: 0.8rem; 
-            min-height: 65px; /* Allow growth for text */
+            min-height: 65px; 
             padding: 5px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             font-size: 1.5rem; line-height: 1.2;
@@ -137,6 +125,7 @@
             position: relative; overflow: hidden; 
             cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
         }
+        .game-card.maintenance { filter: grayscale(1); opacity: 0.7; }
         .game-card:active { transform: scale(0.98); box-shadow: 0 2px 0 #1e293b; border-color: #F59E0B; }
         .game-card-title { font-size: 1.3rem; font-weight: bold; color: white; display: flex; flex-direction: column; }
         
@@ -153,6 +142,9 @@
         .menu-btn.daily.completed { background: #10B981; box-shadow: 0 4px 0 #059669; cursor: default; }
         
         .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
+        
+        .add-life-btn { background: #16A34A; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; margin-left: 4px; border: 1px solid #14532D; cursor: pointer; }
+        .add-life-btn:active { transform: scale(0.9); }
 
         /* RADAR CHART DECAGON (10) */
         .radar-chart-container { position: relative; width: 240px; height: 240px; margin: 10px auto; }
@@ -181,17 +173,36 @@
         const GEOMETRY_EMOJIS = ["🔺", "🟥", "⬠", "⬡"]; 
         const NUMERACY_ITEMS = ["🍎", "🍊", "🍋", "🧁", "📦"];
 
-        const EMOTION_SCENARIOS = [
-            { text: "Mainan Budi rusak", correct: "sedih", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
-            { text: "Dapat hadiah sepeda", correct: "senang", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
-            { text: "Diganggu saat main", correct: "marah", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
-            { text: "Melihat badut lucu", correct: "tertawa", options: [{icon:"😂", label:"Tertawa", type:"tertawa"}, {icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😡", label:"Marah", type:"marah"}] },
-            { text: "Ada hantu di TV", correct: "takut", options: [{icon:"😨", label:"Takut", type:"takut"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😴", label:"Ngantuk", type:"ngantuk"}] }
-        ];
+        // EXPANDED EMOTION SCENARIOS (20+)
+        const EMOTION_DB = [
+            // Level 1: Basic (Senang, Sedih, Marah)
+            { level: 1, text: "Dapat hadiah sepeda", correct: "senang", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 1, text: "Es krim jatuh ke tanah", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 1, text: "Mainan direbut teman", correct: "marah", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 1, text: "Ibu pulang kerja", correct: "senang", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 1, text: "Kaki tersandung batu", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            
+            // Level 2: + Kaget, Takut, Bosan
+            { level: 5, text: "Ada petir menggelegar!", correct: "kaget", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
+            { level: 5, text: "Dikejar anjing galak", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 5, text: "Menunggu antrian panjang", correct: "bosan", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
+            { level: 5, text: "Tiba-tiba balon meletus", correct: "kaget", options: [{icon:"😲", label:"Kaget"}, {icon:"😢", label:"Sedih"}, {icon:"😴", label:"Bosan"}] },
+            { level: 5, text: "Listrik mati gelap gulita", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😀", label:"Senang"}, {icon:"😂", label:"Tertawa"}] },
 
-        // Pipe Types: 0:Empty, 1:Vertical(║), 2:Horizontal(═), 3:CornerNE(╚), 4:CornerSE(╔), 5:CornerSW(╗), 6:CornerNW(╝)
-        // Visuals using Unicode Box Drawing
-        const PIPE_CHARS = { 1: "║", 2: "═", 3: "╚", 4: "╔", 5: "╗", 6: "╝" };
+            // Level 3: + Jijik, Malu, Bangga, Capek
+            { level: 10, text: "Ada kecoa di makanan", correct: "jijik", options: [{icon:"🤢", label:"Jijik"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Ngantuk"}] },
+            { level: 10, text: "Menang lomba lari", correct: "bangga", options: [{icon:"😎", label:"Bangga"}, {icon:"😢", label:"Sedih"}, {icon:"😨", label:"Takut"}] },
+            { level: 10, text: "Celana robek di sekolah", correct: "malu", options: [{icon:"😳", label:"Malu"}, {icon:"😎", label:"Bangga"}, {icon:"😡", label:"Marah"}] },
+            { level: 10, text: "Selesai olahraga lari", correct: "capek", options: [{icon:"🥵", label:"Capek"}, {icon:"😳", label:"Malu"}, {icon:"🤢", label:"Jijik"}] },
+            { level: 10, text: "Melihat sampah bau", correct: "jijik", options: [{icon:"🤢", label:"Jijik"}, {icon:"😀", label:"Senang"}, {icon:"😎", label:"Bangga"}] },
+            
+            // Random Mix
+            { level: 1, text: "Dipuji Bu Guru", correct: "senang", options: [{icon:"😀", label:"Senang"}, {icon:"😢", label:"Sedih"}, {icon:"😡", label:"Marah"}] },
+            { level: 1, text: "Boneka kesayangan hilang", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { level: 5, text: "Nonton film hantu", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😂", label:"Tertawa"}, {icon:"😎", label:"Bangga"}] },
+            { level: 5, text: "Badut terpeleset pisang", correct: "tertawa", options: [{icon:"😂", label:"Tertawa"}, {icon:"😢", label:"Sedih"}, {icon:"😡", label:"Marah"}] },
+            { level: 10, text: "Nilai ujian 100", correct: "bangga", options: [{icon:"😎", label:"Bangga"}, {icon:"😳", label:"Malu"}, {icon:"🤢", label:"Jijik"}] }
+        ];
 
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
 
@@ -235,7 +246,7 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_8');
+                const saved = localStorage.getItem('jelajah_beta_v1_8_1');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
@@ -266,9 +277,8 @@
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
-            const attentionTimerRef = useRef(null);
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_8', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_8_1', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -302,11 +312,6 @@
                 }
             }, [puzzle, activeGame]);
 
-            // Cleanup Attention Timer
-            useEffect(() => {
-                return () => { if (attentionTimerRef.current) clearTimeout(attentionTimerRef.current); };
-            }, []);
-
             // --- HELPER: ASSET INJECTION ---
             const getActivePool = (basePool) => {
                 const unlocked = userData.unlockedRewards.map(i => REWARD_ITEMS[i]);
@@ -323,6 +328,25 @@
             const isDailyDone = () => {
                 const today = new Date().toDateString();
                 return userData.dailyChallenge.lastPlayed === today;
+            };
+
+            // --- BUY LIFE FUNCTION ---
+            const buyLife = () => {
+                if (userData.lives >= 3) {
+                    alert("Nyawa masih penuh! ❤️");
+                    return;
+                }
+                if (userData.stars < 100) {
+                    alert("Bintang tidak cukup! Butuh 100⭐");
+                    return;
+                }
+                playSound('unlock');
+                setUserData(p => ({
+                    ...p,
+                    lives: p.lives + 1,
+                    stars: p.stars - 100,
+                    lastLifeLost: p.lives + 1 === 3 ? null : p.lastLifeLost
+                }));
             };
 
             // --- GENERATORS ---
@@ -567,62 +591,35 @@
                 });
             };
 
-            // --- NEW SKILLS GENERATORS ---
-
-            const generateAttention = (customLevel = null) => {
-                // Game logic handled in Render because it's real-time
-                const pool = getActivePool(BASE_MEMORY);
-                const target = pool[Math.floor(Math.random()*pool.length)];
-                setPuzzle({ gameType: 'attention', targetIcon: target, instruction: `Tangkap ${target} !`, score: 0, items: [] });
-            };
-
             const generateEmpathy = (customLevel = null) => {
-                const scenario = EMOTION_SCENARIOS[Math.floor(Math.random() * EMOTION_SCENARIOS.length)];
+                const level = customLevel !== null ? customLevel : userData.empathy.level;
+                
+                // Filter scenarios based on level complexity
+                let available = [];
+                if (level < 5) available = EMOTION_DB.filter(s => s.level === 1);
+                else if (level < 10) available = EMOTION_DB.filter(s => s.level <= 5);
+                else available = EMOTION_DB; // All
+
+                const scenario = available[Math.floor(Math.random() * available.length)];
+                
                 setPuzzle({
                     gameType: 'empathy',
                     scenario: scenario.text,
                     options: scenario.options.sort(()=>0.5-Math.random()).map((o,i) => ({
-                        id: i, icon: o.icon, label: o.label, isTarget: o.type === scenario.correct
+                        id: i, icon: o.icon, label: o.label, isTarget: o.label.toLowerCase() === scenario.correct.toLowerCase()
                     })),
                     instruction: "Apa yang dia rasakan?"
                 });
             };
 
-            const generatePlanning = (customLevel = null) => {
-                // Simplified pipe game: 3x3 Grid. Center is fixed. Corners rotate.
-                // Level 1: Simply rotate straight pipes.
-                const level = customLevel !== null ? customLevel : userData.planning.level;
-                
-                // Pre-defined simple layout for beta stability
-                // S = Start, E = End, 1-6 = Pipes
-                let grid = [
-                    {type: 'start', r:0, c:0, rot:0, fixed:true}, {type: 2, r:0, c:1, rot:0, correct:0}, {type: 3, r:0, c:2, rot:0, correct:180},
-                    {type: 0, r:1, c:0}, {type: 0, r:1, c:1}, {type: 1, r:1, c:2, rot:0, correct:0},
-                    {type: 0, r:2, c:0}, {type: 0, r:2, c:1}, {type: 'end', r:2, c:2, rot:0, fixed:true}
-                ];
-
-                // Randomize initial rotation for non-fixed
-                grid = grid.map(cell => {
-                    if(!cell.fixed && cell.type > 0) {
-                        // Random rotation: 0, 90, 180, 270
-                        let rnd = Math.floor(Math.random() * 4) * 90;
-                        // Ensure it's not starting correct purely by chance (make it engaging)
-                        if(rnd === cell.correct) rnd = (rnd + 90) % 360;
-                        return {...cell, rot: rnd};
-                    }
-                    return cell;
-                });
-
-                setPuzzle({
-                    gameType: 'planning',
-                    grid: grid,
-                    instruction: "Sambungkan pipa air!"
-                });
-            };
-
-
             // --- CONTROLLERS ---
             const startGame = (type, mode) => {
+                // MAINTENANCE CHECK
+                if (type === 'attention' || type === 'planning') {
+                    alert("🚧 Game ini sedang dalam perbaikan untuk peningkatan kualitas! 🚧\n\nNantikan update seru berikutnya!");
+                    return;
+                }
+
                 setActiveGame(type);
                 if (mode === 'new') setUserData(p => ({ ...p, lives: 3, [type]: { level: 0, score: 0 } }));
                 setScreen('game');
@@ -636,9 +633,7 @@
                         case 'analysis': generateAnalysis(lv); break;
                         case 'pattern': generatePattern(lv); break;
                         case 'math': generateMath(lv); break;
-                        case 'attention': generateAttention(lv); break;
                         case 'empathy': generateEmpathy(lv); break;
-                        case 'planning': generatePlanning(lv); break;
                     }
                 }, 50);
             };
@@ -647,7 +642,8 @@
                 if (isDailyDone()) return;
                 setActiveGame('daily');
                 setScreen('game');
-                const games = Object.keys(SKILL_NAMES); // All 10 skills
+                // EXCLUDE MAINTENANCE GAMES
+                const games = ['maze','block','memory','secret','analysis','pattern','math','empathy'];
                 const randomType = games[Math.floor(Math.random() * games.length)];
                 
                 setTimeout(() => {
@@ -660,9 +656,7 @@
                         case 'analysis': generateAnalysis(diff); break;
                         case 'pattern': generatePattern(diff); break;
                         case 'math': generateMath(diff); break;
-                        case 'attention': generateAttention(diff); break;
                         case 'empathy': generateEmpathy(diff); break;
-                        case 'planning': generatePlanning(diff); break;
                     }
                 }, 50);
             };
@@ -672,8 +666,7 @@
                 const types = {
                     maze: generateMaze, block: generateBlock, memory: generateMemory,
                     secret: generateSecret, analysis: generateAnalysis, pattern: generatePattern,
-                    math: generateMath, attention: generateAttention, empathy: generateEmpathy,
-                    planning: generatePlanning
+                    math: generateMath, empathy: generateEmpathy
                 };
                 if(types[activeGame]) types[activeGame]();
             };
@@ -681,11 +674,6 @@
             const handleAnswer = (opt) => {
                 if (feedback === 'correct') return;
                 
-                // Special handling for scale visual
-                if (activeGame === 'math' && !opt.isTarget) {
-                    // Logic for tilt can be added here if needed
-                }
-
                 if (opt.isTarget) {
                     playSound('correct'); setFeedback('correct'); setWrongId(null);
                     setTimeout(() => {
@@ -723,89 +711,6 @@
                 }
             };
 
-            // ATTENTION LOGIC (Real-time spawning)
-            useEffect(() => {
-                if (puzzle && puzzle.gameType === 'attention' && !feedback) {
-                    const spawnInterval = 800; // Spawn every 800ms
-                    attentionTimerRef.current = setInterval(() => {
-                        setPuzzle(prev => {
-                            if(!prev || prev.items.length > 5) return prev; // Limit items
-                            const isTarget = Math.random() > 0.6;
-                            const id = Date.now();
-                            const newItem = {
-                                id: id,
-                                icon: isTarget ? prev.targetIcon : "💣", // Bomb as distractor
-                                x: Math.random() * 240, // Container width approx
-                                y: Math.random() * 240,
-                                isTarget: isTarget
-                            };
-                            return { ...prev, items: [...prev.items, newItem] };
-                        });
-                    }, spawnInterval);
-                }
-                return () => clearInterval(attentionTimerRef.current);
-            }, [puzzle, feedback]);
-
-            const handleAttentionClick = (item) => {
-                if (item.isTarget) {
-                    playSound('correct');
-                    // Remove item
-                    setPuzzle(prev => ({...prev, items: prev.items.filter(i => i.id !== item.id), score: prev.score + 1}));
-                    if(puzzle.score >= 4) { // Win condition: hit 5 targets
-                        setFeedback('correct');
-                        setTimeout(() => {
-                            // Logic similar to handleAnswer
-                             setUserData(p => ({
-                                ...p, stars: p.stars + 10,
-                                stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
-                                [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
-                            }));
-                            setScreen('result');
-                            setFeedback(null);
-                        }, 500);
-                    }
-                } else {
-                    playSound('wrong');
-                    // Lose logic
-                    setUserData(p => ({ 
-                        ...p, lives: Math.max(0, p.lives-1), 
-                        stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], l: p.stats[activeGame].l + 1 } },
-                        lastLifeLost: p.lives===3?Date.now():p.lastLifeLost 
-                    }));
-                    setPuzzle(prev => ({...prev, items: prev.items.filter(i => i.id !== item.id)})); // Remove bomb
-                }
-            };
-
-            // PLANNING LOGIC
-            const rotatePipe = (idx) => {
-                if (feedback) return;
-                setPuzzle(prev => {
-                    const newGrid = [...prev.grid];
-                    const cell = newGrid[idx];
-                    if (cell.fixed || cell.type === 0) return prev;
-                    
-                    cell.rot = (cell.rot + 90) % 360;
-                    
-                    // Check win
-                    const allCorrect = newGrid.every(c => c.fixed || c.type === 0 || c.rot === c.correct);
-                    if (allCorrect) {
-                        playSound('correct');
-                        setFeedback('correct');
-                        setTimeout(() => {
-                             setUserData(p => ({
-                                ...p, stars: p.stars + 10,
-                                stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
-                                [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
-                            }));
-                            setScreen('result');
-                            setFeedback(null);
-                        }, 500);
-                    }
-                    return { ...prev, grid: newGrid };
-                });
-            };
-
-
             // --- RENDER HELPERS ---
             const renderOptionGrid = (indices, gridSize, pattern, isRotated) => {
                 let matrix = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
@@ -836,10 +741,8 @@
                 const rates = keys.map(k => getWinRate(k));
                 
                 // 10 Points -> 36 degrees each
-                // Start -90 (Top)
                 const angles = Array.from({length: 10}, (_, i) => -90 + (i * 36));
-                
-                const center = 120; const radius = 90; // slightly bigger
+                const center = 120; const radius = 90; 
                 const points = angles.map((angle, i) => {
                     const r = radius * rates[i];
                     const rad = angle * (Math.PI / 180);
@@ -871,7 +774,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.8 - 10 Skills</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.8.1</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -887,17 +790,23 @@
 
                     <div className="grid grid-cols-2 gap-2 mb-20">
                     {Object.keys(SKILL_NAMES).map(game => (
-                        <div key={game} onClick={() => startGame(game, 'continue')} className="game-card" style={{flexDirection:'column', alignItems:'flex-start', gap:'5px'}}>
+                        <div key={game} onClick={() => startGame(game, 'continue')} 
+                             className={`game-card ${(game === 'attention' || game === 'planning') ? 'maintenance' : ''}`} 
+                             style={{flexDirection:'column', alignItems:'flex-start', gap:'5px'}}>
                             <div className="game-card-title text-sm">{SKILL_NAMES[game]}</div>
                             <div className="flex justify-between w-full items-end">
                                 <span className="text-[10px] text-slate-400">Lv {userData[game].level + 1}</span>
-                                <span className="text-amber-500">▶</span>
+                                <span className="text-amber-500">{(game === 'attention' || game === 'planning') ? '🛠️' : '▶'}</span>
                             </div>
                         </div>
                     ))}
                     </div>
                     
-                    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-2 text-center text-slate-500 text-[10px] border-t border-amber-500 max-w-[500px] mx-auto">Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}</div>
+                    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-2 text-center text-slate-500 text-[10px] border-t border-amber-500 max-w-[500px] mx-auto flex justify-center items-center gap-2">
+                        <span>Energi: {userData.lives}/3 {regenTimer}</span>
+                        <button className="add-life-btn" onClick={buyLife}>+</button>
+                        <span>• Bintang: {userData.stars}</span>
+                    </div>
                 </div>
             );
 
@@ -968,7 +877,11 @@
             return (
                 <div className="app-container">
                     <div className="hud-bar">
-                        <div className="flex flex-col items-center"><span className="text-lg">❤️ {userData.lives}</span><span className="text-[8px] text-slate-400">{regenTimer}</span></div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-lg">❤️ {userData.lives}</span>
+                            <button className="add-life-btn" onClick={buyLife}>+</button>
+                            <span className="text-[8px] text-slate-400 ml-1">{regenTimer}</span>
+                        </div>
                         <div className="flex flex-col items-center">
                             <span className="text-[10px] text-slate-400 font-bold uppercase">{activeGame==='daily'?'Tantangan':SKILL_NAMES[activeGame]} Lv {activeGame==='daily'?'?':userData[activeGame].level + 1}</span>
                             <button onClick={() => setScreen('menu')} className="home-icon-btn mt-1">🏠 MENU</button>
@@ -1070,47 +983,12 @@
                                         </div>
                                     )}
                                     
-                                    {/* --- NEW GAMES --- */}
-
-                                    {/* ATENSI (RADAR FOKUS) */}
-                                    {puzzle.gameType === 'attention' && (
-                                        <div className="w-full text-center">
-                                            <div className="text-3xl mb-2">{puzzle.targetIcon}</div>
-                                            <div className="attention-area">
-                                                {puzzle.items.map(item => (
-                                                    <div key={item.id} className="attention-target"
-                                                        style={{left: item.x, top: item.y}}
-                                                        onMouseDown={() => handleAttentionClick(item)}
-                                                        onTouchStart={() => handleAttentionClick(item)}>
-                                                        {item.icon}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <div className="mt-2 text-slate-400">Skor: {puzzle.score}/5</div>
-                                        </div>
-                                    )}
-
-                                    {/* EMPATI (DETEKTIF RASA) */}
+                                    {/* EMPATI (DETEKTIF RASA) - UPDATED */}
                                     {puzzle.gameType === 'empathy' && (
                                         <div className="w-full text-center">
-                                            <div className="bg-slate-800 p-6 rounded-xl border-2 border-slate-600 mb-6">
-                                                <div className="text-4xl mb-4">📖</div>
-                                                <p className="text-xl text-white font-bold">"{puzzle.scenario}"</p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* PERENCANAAN (PIPA) */}
-                                    {puzzle.gameType === 'planning' && (
-                                        <div className="w-full flex justify-center">
-                                            <div className="pipe-grid" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
-                                                {puzzle.grid.map((cell, i) => (
-                                                    <div key={i} onClick={() => rotatePipe(i)}
-                                                        className={`pipe-cell ${cell.type === 'start' ? 'start' : cell.type === 'end' ? 'end' : ''}`}
-                                                        style={{transform: `rotate(${cell.rot}deg)`}}>
-                                                        {cell.type === 'start' ? '💧' : cell.type === 'end' ? '🪣' : cell.type === 0 ? '' : PIPE_CHARS[cell.type]}
-                                                    </div>
-                                                ))}
+                                            <div className="bg-slate-800 p-6 rounded-xl border-2 border-slate-600 mb-6 shadow-lg">
+                                                <div className="text-5xl mb-4">💬</div>
+                                                <p className="text-xl text-white font-bold italic">"{puzzle.scenario}"</p>
                                             </div>
                                         </div>
                                     )}
@@ -1118,7 +996,7 @@
                                 </div>
                                 
                                 {/* OPTIONS BUTTONS */}
-                                {puzzle.gameType !== 'analysis' && puzzle.gameType !== 'attention' && puzzle.gameType !== 'planning' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
+                                {puzzle.gameType !== 'analysis' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                     <div className={`option-grid ${puzzle.options.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                         {puzzle.options.map((opt, i) => (
                                             <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
