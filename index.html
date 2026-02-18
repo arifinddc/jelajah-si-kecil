@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.6</title>
+    <title>Jelajah Si Kecil - Beta v1.6.1</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -78,7 +78,7 @@
 
         /* Pattern (Kereta Logika) */
         .pattern-train { display: flex; gap: 8px; justify-content: center; background: #334155; padding: 15px; border-radius: 16px; border: 3px solid #64748b; margin-bottom: 20px; max-width: 100%; overflow-x: auto; }
-        .pattern-cell { width: 50px; height: 50px; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid #475569; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
+        .pattern-cell { width: 50px; height: 50px; flex-shrink: 0; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid #475569; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
         .pattern-cell.question { border: 2px dashed #F59E0B; color: #F59E0B; animation: pulse 1.5s infinite; }
 
         /* UI Common */
@@ -187,7 +187,7 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_6');
+                const saved = localStorage.getItem('jelajah_beta_v1_6_1');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
@@ -211,7 +211,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_6', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_6_1', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -225,9 +225,10 @@
                 return () => clearInterval(timer);
             }, [userData]);
 
-            // Memory Timer
+            // Memory Timer FIXED for Daily Challenge
             useEffect(() => {
-                if (activeGame === 'memory' && puzzle && puzzle.phase === 'memorize') {
+                // Check puzzle.gameType instead of just activeGame to handle Daily mode correctly
+                if (puzzle && puzzle.gameType === 'memory' && puzzle.phase === 'memorize') {
                     const duration = puzzle.duration * 1000;
                     const interval = 50; 
                     const step = 100 / (duration / interval);
@@ -399,58 +400,90 @@
 
             const generatePattern = (customLevel = null) => {
                 const level = customLevel !== null ? customLevel : userData.pattern.level;
-                let difficulty = 1; // 1: AB, 2: ABC/AAB, 3: Num, 4: Geom
+                let difficulty = 1; 
+                let optionCount = 3;
                 
                 if (level >= 5) difficulty = 2;
-                if (level >= 15) difficulty = 3;
-                if (level >= 25) difficulty = 4;
+                if (level >= 15) { difficulty = 3; optionCount = 4; } // Harder -> 4 options
+                if (level >= 25) { difficulty = 4; optionCount = 4; }
 
-                let sequence = [];
-                let target = "";
-                let options = [];
+                // Variable Length: Random between 4 to 6 items
+                const seqLength = Math.floor(Math.random() * 3) + 4; // 4, 5, or 6
+
+                let fullSequence = [];
+                let optionsPool = [];
+                let logicType = '';
 
                 if (difficulty === 1) { // AB-AB
+                    logicType = 'AB';
                     const a = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     let b = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     while(b===a) b = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
-                    sequence = [a, b, a, b, a];
-                    target = b;
-                    options = [b, a, PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)]];
+                    
+                    for(let i=0; i<seqLength; i++) {
+                        fullSequence.push(i % 2 === 0 ? a : b);
+                    }
+                    optionsPool = [a, b, PATTERN_EMOJIS.find(x => x!==a && x!==b)];
+
                 } else if (difficulty === 2) { // ABC or AAB
                     const type = Math.random() > 0.5 ? 'ABC' : 'AAB';
+                    logicType = type;
                     const a = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     let b = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     while(b===a) b = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     let c = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
                     while(c===a || c===b) c = PATTERN_EMOJIS[Math.floor(Math.random()*PATTERN_EMOJIS.length)];
 
-                    if(type === 'ABC') { sequence = [a,b,c,a,b]; target = c; options=[c, a, b]; }
-                    else { sequence = [a,a,b,a,a]; target = b; options=[b, a, c]; }
+                    for(let i=0; i<seqLength; i++) {
+                        if(type === 'ABC') fullSequence.push([a,b,c][i%3]);
+                        else fullSequence.push([a,a,b][i%3]);
+                    }
+                    optionsPool = [a, b, c];
+
                 } else if (difficulty === 3) { // Numbers
+                    logicType = 'NUM';
                     const start = Math.floor(Math.random() * 5) + 1;
                     const step = Math.floor(Math.random() * 3) + 1;
-                    sequence = [start, start+step, start+step*2, start+step*3, start+step*4];
-                    target = start+step*5;
-                    options = [target, target-1, target+2];
+                    for(let i=0; i<seqLength; i++) fullSequence.push(start + step*i);
+                    optionsPool = [start + step*(seqLength), start + step*(seqLength-2), start + step*(seqLength+1)];
+
                 } else { // Geometry (Sides)
-                    // 3, 4, 5 -> 6
-                    sequence = [GEOMETRY_EMOJIS[0], GEOMETRY_EMOJIS[1], GEOMETRY_EMOJIS[2]];
-                    target = GEOMETRY_EMOJIS[3];
-                    options = [GEOMETRY_EMOJIS[3], GEOMETRY_EMOJIS[0], GEOMETRY_EMOJIS[1]];
+                    logicType = 'GEO';
+                    // 3, 4, 5, 6 looping
+                    const shapes = GEOMETRY_EMOJIS; 
+                    for(let i=0; i<seqLength; i++) fullSequence.push(shapes[i % shapes.length]);
+                    optionsPool = [...shapes];
                 }
+
+                // Pick random missing index (Anywhere in sequence)
+                const missingIdx = Math.floor(Math.random() * seqLength);
+                const target = fullSequence[missingIdx];
+
+                // Ensure target is in options
+                let finalOptions = [target];
                 
-                // Shuffle options
-                const finalOptions = options.map((val, i) => ({
-                    id: `opt_${i}`,
-                    icon: val,
-                    isTarget: val === target
-                })).sort(() => 0.5 - Math.random());
+                // Fill remaining options
+                let attempts = 0;
+                while(finalOptions.length < optionCount && attempts < 50) {
+                    let rnd;
+                    if(logicType === 'NUM') {
+                        rnd = fullSequence[0] + Math.floor(Math.random() * 15);
+                    } else if (logicType === 'GEO') {
+                        rnd = GEOMETRY_EMOJIS[Math.floor(Math.random() * GEOMETRY_EMOJIS.length)];
+                    } else {
+                        rnd = PATTERN_EMOJIS[Math.floor(Math.random() * PATTERN_EMOJIS.length)];
+                    }
+                    
+                    if(!finalOptions.includes(rnd) && rnd !== target) finalOptions.push(rnd);
+                    attempts++;
+                }
 
                 setPuzzle({
                     gameType: 'pattern',
-                    sequence: sequence,
-                    options: finalOptions,
-                    targetId: 'dummy', // Not used directly logic handled in loop
+                    sequence: fullSequence,
+                    missingIdx: missingIdx,
+                    options: finalOptions.sort(() => 0.5 - Math.random()).map((val,i) => ({id:i, icon:val, isTarget:val===target})),
+                    targetId: 'dummy',
                     instruction: "Lengkapi keretanya!"
                 });
             };
@@ -601,7 +634,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.6</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.6.1</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -768,16 +801,17 @@
                                         <div className="w-full">
                                             <div className="pattern-train">
                                                 {puzzle.sequence.map((item, i) => (
-                                                    <div key={i} className="pattern-cell">{item}</div>
+                                                    <div key={i} className={`pattern-cell ${i === puzzle.missingIdx ? 'question' : ''}`}>
+                                                        {i === puzzle.missingIdx ? '?' : item}
+                                                    </div>
                                                 ))}
-                                                <div className="pattern-cell question">?</div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                                 
                                 {puzzle.gameType !== 'analysis' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
-                                    <div className={`option-grid ${puzzle.options.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                    <div className={`option-grid ${puzzle.options.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                         {puzzle.options.map((opt, i) => (
                                             <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
                                                 {puzzle.gameType === 'maze' ? opt.icon : 
