@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.7.1</title>
+    <title>Jelajah Si Kecil - Beta v1.7.2</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -24,7 +24,8 @@
         }
 
         .hud-bar { height: 60px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; background: rgba(15, 23, 42, 0.95); border-bottom: 3px solid #F59E0B; z-index: 20; }
-        .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-y: hidden; position: relative; } /* Overflow hidden to prevent scroll bounce */
+        /* Overflow visible allowed here so scaled items don't clip, but guarded by app-container */
+        .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-x: hidden; overflow-y: auto; position: relative; } 
         .instruction-text { font-size: 1.1rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.5rem; text-align: center; flex-shrink: 0; }
 
         /* --- STYLES FOR FEATURES --- */
@@ -81,20 +82,28 @@
         .pattern-cell { width: 50px; height: 50px; flex-shrink: 0; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid #475569; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
         .pattern-cell.question { border: 2px dashed #F59E0B; color: #F59E0B; animation: pulse 1.5s infinite; }
 
-        /* Numerasi (Timbangan Pintar) - UPDATED */
+        /* Numerasi (Timbangan Pintar) - FIXED CUTOFF */
         .scale-container { 
-            position: relative; width: 100%; max-width: 280px; 
-            height: 160px; /* Reduced height to fit better */
-            margin: 20px 0; 
+            position: relative; width: 100%; 
+            height: 160px; 
+            margin: 10px 0 20px 0; 
             display: flex; justify-content: center; align-items: flex-end; 
-            flex-shrink: 0; /* Prevent squashing */
+            overflow: visible; /* Penting agar tidak terpotong */
         }
         .scale-base { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 60px solid #475569; position: relative; z-index: 10; }
-        .scale-beam-wrapper { position: absolute; bottom: 55px; left: 50%; width: 240px; height: 8px; transform: translateX(-50%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        .scale-beam-wrapper { 
+            position: absolute; bottom: 55px; left: 50%; 
+            width: 200px; /* Diperkecil dari 240px agar aman di layar HP */
+            height: 8px; 
+            transform: translateX(-50%); 
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         .scale-beam { width: 100%; height: 100%; background: #94a3b8; border-radius: 5px; position: relative; }
         
         .scale-pan { 
-            position: absolute; top: 5px; width: 60px; height: 45px; /* Smaller pans */
+            position: absolute; top: 5px; 
+            width: 50px; height: 40px; /* Diperkecil proporsional */
             border-bottom: 2px solid #94a3b8; border-left: 2px solid #94a3b8; border-right: 2px solid #94a3b8; 
             border-radius: 0 0 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; 
             padding-bottom: 2px; transition: all 0.3s; 
@@ -105,10 +114,10 @@
         .scale-pan.left .scale-string { left: 50%; }
         .scale-pan.right .scale-string { right: 50%; }
         
-        .scale-item { font-size: 1.1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } /* Stack tighter */
-        .scale-slot { width: 30px; height: 30px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
+        .scale-item { font-size: 1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } 
+        .scale-slot { width: 28px; height: 28px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
 
-        /* UI Common - UPDATED FOR SMALLER BUTTONS */
+        /* UI Common */
         .option-grid { display: grid; gap: 8px; width: 100%; max-width: 340px; margin-top: auto; margin-bottom: 10px; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -116,9 +125,9 @@
         
         .btn-choice { 
             background: white; border: 2px solid #CBD5E1; border-radius: 0.8rem; 
-            height: 65px; /* Fixed height instead of aspect ratio for consistency */
+            height: 65px; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 1.5rem; /* Smaller font */
+            font-size: 1.5rem; 
             transition: transform 0.1s; box-shadow: 0 3px 0 #94A3B8; 
             color: #0F172A; width: 100%; position: relative; overflow: hidden; 
         }
@@ -726,7 +735,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.7.1</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.7.2</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -905,7 +914,7 @@
                                             </div>
                                         </div>
                                     )}
-                                    {/* NUMERASI (TIMBANGAN) - FIXED VIEW */}
+                                    {/* NUMERASI (TIMBANGAN) - REVISED SIZE */}
                                     {puzzle.gameType === 'math' && (
                                         <div className="scale-container">
                                             <div className="scale-beam-wrapper" style={{
