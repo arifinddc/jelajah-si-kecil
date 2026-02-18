@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.7</title>
+    <title>Jelajah Si Kecil - Beta v1.7.1</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -24,8 +24,8 @@
         }
 
         .hud-bar { height: 60px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; background: rgba(15, 23, 42, 0.95); border-bottom: 3px solid #F59E0B; z-index: 20; }
-        .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-y: auto; }
-        .instruction-text { font-size: 1.1rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.5rem; text-align: center; }
+        .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-y: hidden; position: relative; } /* Overflow hidden to prevent scroll bounce */
+        .instruction-text { font-size: 1.1rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.5rem; text-align: center; flex-shrink: 0; }
 
         /* --- STYLES FOR FEATURES --- */
         .stat-badge { background: #334155; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; color: #e2e8f0; font-weight: bold; border: 1px solid #475569; transition: all 0.2s; }
@@ -81,31 +81,50 @@
         .pattern-cell { width: 50px; height: 50px; flex-shrink: 0; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid #475569; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
         .pattern-cell.question { border: 2px dashed #F59E0B; color: #F59E0B; animation: pulse 1.5s infinite; }
 
-        /* Numerasi (Timbangan Pintar) */
-        .scale-container { position: relative; width: 100%; max-width: 300px; height: 180px; margin-bottom: 20px; display: flex; justify-content: center; align-items: flex-end; }
+        /* Numerasi (Timbangan Pintar) - UPDATED */
+        .scale-container { 
+            position: relative; width: 100%; max-width: 280px; 
+            height: 160px; /* Reduced height to fit better */
+            margin: 20px 0; 
+            display: flex; justify-content: center; align-items: flex-end; 
+            flex-shrink: 0; /* Prevent squashing */
+        }
         .scale-base { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 60px solid #475569; position: relative; z-index: 10; }
-        .scale-beam-wrapper { position: absolute; bottom: 55px; left: 50%; width: 280px; height: 10px; transform: translateX(-50%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .scale-beam-wrapper { position: absolute; bottom: 55px; left: 50%; width: 240px; height: 8px; transform: translateX(-50%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .scale-beam { width: 100%; height: 100%; background: #94a3b8; border-radius: 5px; position: relative; }
-        .scale-pan { position: absolute; top: 5px; width: 80px; height: 60px; border-bottom: 2px solid #94a3b8; border-left: 2px solid #94a3b8; border-right: 2px solid #94a3b8; border-radius: 0 0 20px 20px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; padding-bottom: 5px; transition: all 0.3s; }
+        
+        .scale-pan { 
+            position: absolute; top: 5px; width: 60px; height: 45px; /* Smaller pans */
+            border-bottom: 2px solid #94a3b8; border-left: 2px solid #94a3b8; border-right: 2px solid #94a3b8; 
+            border-radius: 0 0 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; 
+            padding-bottom: 2px; transition: all 0.3s; 
+        }
         .scale-pan.left { left: 0; transform-origin: top left; }
         .scale-pan.right { right: 0; transform-origin: top right; }
-        .scale-string { position: absolute; top: -40px; width: 2px; height: 40px; background: #64748b; }
+        .scale-string { position: absolute; top: -35px; width: 2px; height: 35px; background: #64748b; }
         .scale-pan.left .scale-string { left: 50%; }
         .scale-pan.right .scale-string { right: 50%; }
         
-        .scale-item { font-size: 1.5rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
-        .scale-slot { width: 40px; height: 40px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; }
+        .scale-item { font-size: 1.1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } /* Stack tighter */
+        .scale-slot { width: 30px; height: 30px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
 
-        /* UI Common */
-        .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
+        /* UI Common - UPDATED FOR SMALLER BUTTONS */
+        .option-grid { display: grid; gap: 8px; width: 100%; max-width: 340px; margin-top: auto; margin-bottom: 10px; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
         
-        .btn-choice { background: white; border: 3px solid #CBD5E1; border-radius: 1rem; aspect-ratio: 1.3; display: flex; align-items: center; justify-content: center; font-size: 2rem; transition: transform 0.1s; box-shadow: 0 4px 0 #94A3B8; color: #0F172A; width: 100%; position: relative; overflow: hidden; }
+        .btn-choice { 
+            background: white; border: 2px solid #CBD5E1; border-radius: 0.8rem; 
+            height: 65px; /* Fixed height instead of aspect ratio for consistency */
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; /* Smaller font */
+            transition: transform 0.1s; box-shadow: 0 3px 0 #94A3B8; 
+            color: #0F172A; width: 100%; position: relative; overflow: hidden; 
+        }
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 1px 0 #94A3B8; }
-        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; }
-        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 4px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
+        .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 3px 0 #166534; }
+        .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 3px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
         
         /* CARD STYLES */
         .game-card { 
@@ -208,7 +227,7 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_7');
+                const saved = localStorage.getItem('jelajah_beta_v1_7_1');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
@@ -232,7 +251,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_7', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_7_1', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -707,7 +726,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.7</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.7.1</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -886,7 +905,7 @@
                                             </div>
                                         </div>
                                     )}
-                                    {/* NUMERASI (TIMBANGAN) */}
+                                    {/* NUMERASI (TIMBANGAN) - FIXED VIEW */}
                                     {puzzle.gameType === 'math' && (
                                         <div className="scale-container">
                                             <div className="scale-beam-wrapper" style={{
