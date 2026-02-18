@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.7.2</title>
+    <title>Jelajah Si Kecil - Beta v1.8</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -24,7 +24,6 @@
         }
 
         .hud-bar { height: 60px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; background: rgba(15, 23, 42, 0.95); border-bottom: 3px solid #F59E0B; z-index: 20; }
-        /* Overflow visible allowed here so scaled items don't clip, but guarded by app-container */
         .game-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 1rem; width: 100%; overflow-x: hidden; overflow-y: auto; position: relative; } 
         .instruction-text { font-size: 1.1rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.5rem; text-align: center; flex-shrink: 0; }
 
@@ -82,40 +81,31 @@
         .pattern-cell { width: 50px; height: 50px; flex-shrink: 0; background: #0F172A; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid #475569; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
         .pattern-cell.question { border: 2px dashed #F59E0B; color: #F59E0B; animation: pulse 1.5s infinite; }
 
-        /* Numerasi (Timbangan Pintar) - FIXED CUTOFF */
-        .scale-container { 
-            position: relative; width: 100%; 
-            height: 160px; 
-            margin: 10px 0 20px 0; 
-            display: flex; justify-content: center; align-items: flex-end; 
-            overflow: visible; /* Penting agar tidak terpotong */
-        }
+        /* Numerasi (Timbangan Pintar) */
+        .scale-container { position: relative; width: 100%; height: 160px; margin: 10px 0 20px 0; display: flex; justify-content: center; align-items: flex-end; overflow: visible; }
         .scale-base { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 60px solid #475569; position: relative; z-index: 10; }
-        
-        .scale-beam-wrapper { 
-            position: absolute; bottom: 55px; left: 50%; 
-            width: 200px; /* Diperkecil dari 240px agar aman di layar HP */
-            height: 8px; 
-            transform: translateX(-50%); 
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
+        .scale-beam-wrapper { position: absolute; bottom: 55px; left: 50%; width: 200px; height: 8px; transform: translateX(-50%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .scale-beam { width: 100%; height: 100%; background: #94a3b8; border-radius: 5px; position: relative; }
-        
-        .scale-pan { 
-            position: absolute; top: 5px; 
-            width: 50px; height: 40px; /* Diperkecil proporsional */
-            border-bottom: 2px solid #94a3b8; border-left: 2px solid #94a3b8; border-right: 2px solid #94a3b8; 
-            border-radius: 0 0 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; 
-            padding-bottom: 2px; transition: all 0.3s; 
-        }
+        .scale-pan { position: absolute; top: 5px; width: 50px; height: 40px; border-bottom: 2px solid #94a3b8; border-left: 2px solid #94a3b8; border-right: 2px solid #94a3b8; border-radius: 0 0 15px 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; padding-bottom: 2px; transition: all 0.3s; }
         .scale-pan.left { left: 0; transform-origin: top left; }
         .scale-pan.right { right: 0; transform-origin: top right; }
         .scale-string { position: absolute; top: -35px; width: 2px; height: 35px; background: #64748b; }
         .scale-pan.left .scale-string { left: 50%; }
         .scale-pan.right .scale-string { right: 50%; }
-        
         .scale-item { font-size: 1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } 
         .scale-slot { width: 28px; height: 28px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
+
+        /* Atensi (Radar Fokus) */
+        .attention-area { position: relative; width: 300px; height: 300px; border: 4px solid #334155; border-radius: 50%; background: #0F172A; overflow: hidden; margin: 0 auto; box-shadow: inset 0 0 30px rgba(0,0,0,0.5); }
+        .attention-target { position: absolute; font-size: 2.5rem; transition: all 0.1s; cursor: pointer; user-select: none; animation: popIn 0.2s; }
+        .attention-target:active { transform: scale(0.9); }
+
+        /* Perencanaan (Pipa) */
+        .pipe-grid { display: grid; gap: 0; background: #334155; padding: 4px; border-radius: 8px; margin: 0 auto; }
+        .pipe-cell { width: 50px; height: 50px; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid #475569; color: #64748B; cursor: pointer; transition: transform 0.2s; }
+        .pipe-cell.connected { color: #3B82F6; text-shadow: 0 0 5px #3B82F6; }
+        .pipe-cell.start { background: #3B82F6; color: white; }
+        .pipe-cell.end { background: #F59E0B; color: white; }
 
         /* UI Common */
         .option-grid { display: grid; gap: 8px; width: 100%; max-width: 340px; margin-top: auto; margin-bottom: 10px; }
@@ -125,12 +115,15 @@
         
         .btn-choice { 
             background: white; border: 2px solid #CBD5E1; border-radius: 0.8rem; 
-            height: 65px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.5rem; 
+            min-height: 65px; /* Allow growth for text */
+            padding: 5px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-size: 1.5rem; line-height: 1.2;
             transition: transform 0.1s; box-shadow: 0 3px 0 #94A3B8; 
             color: #0F172A; width: 100%; position: relative; overflow: hidden; 
         }
+        .btn-choice span.label-text { font-size: 0.75rem; font-weight: 700; color: #475569; margin-top: 2px; text-transform: uppercase; }
+        
         .btn-choice:active { transform: scale(0.95); box-shadow: 0 1px 0 #94A3B8; }
         .btn-choice.correct { background: #4ADE80; border-color: #166534; box-shadow: 0 3px 0 #166534; }
         .btn-choice.wrong { background: #F87171; border-color: #991B1B; box-shadow: 0 3px 0 #991B1B; opacity: 0.8; animation: shake 0.3s; }
@@ -161,19 +154,10 @@
         
         .home-icon-btn { background: #334155; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; color: #F59E0B; border: 1px solid #475569; }
 
-        /* RADAR CHART HEPTAGON (7) */
-        .radar-chart-container { position: relative; width: 220px; height: 220px; margin: 20px auto; }
-        .radar-label { position: absolute; font-size: 9px; font-weight: bold; color: white; text-transform: uppercase; text-shadow: 0 1px 2px black; }
+        /* RADAR CHART DECAGON (10) */
+        .radar-chart-container { position: relative; width: 240px; height: 240px; margin: 10px auto; }
+        .radar-label { position: absolute; font-size: 8px; font-weight: bold; color: white; text-transform: uppercase; text-shadow: 0 1px 2px black; width: 50px; text-align: center; }
         
-        /* Positions calculated for 7 points */
-        .radar-label.p1 { top: -15px; left: 50%; transform: translateX(-50%); } 
-        .radar-label.p2 { top: 20px; right: -20px; } 
-        .radar-label.p3 { top: 100px; right: -30px; } 
-        .radar-label.p4 { bottom: 0px; right: 0px; } 
-        .radar-label.p5 { bottom: 0px; left: 0px; }
-        .radar-label.p6 { top: 100px; left: -30px; }
-        .radar-label.p7 { top: 20px; left: -20px; }
-
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -183,7 +167,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // --- DATA & ASSETS ---
         const BLOCK_PATTERNS = ['linear-gradient(135deg, #3B82F6, #2563EB)', 'linear-gradient(135deg, #EF4444, #DC2626)', 'linear-gradient(135deg, #10B981, #059669)', 'linear-gradient(135deg, #F59E0B, #D97706)', 'linear-gradient(135deg, #8B5CF6, #7C3AED)'];
@@ -197,9 +181,24 @@
         const GEOMETRY_EMOJIS = ["🔺", "🟥", "⬠", "⬡"]; 
         const NUMERACY_ITEMS = ["🍎", "🍊", "🍋", "🧁", "📦"];
 
+        const EMOTION_SCENARIOS = [
+            { text: "Mainan Budi rusak", correct: "sedih", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
+            { text: "Dapat hadiah sepeda", correct: "senang", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
+            { text: "Diganggu saat main", correct: "marah", options: [{icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😡", label:"Marah", type:"marah"}] },
+            { text: "Melihat badut lucu", correct: "tertawa", options: [{icon:"😂", label:"Tertawa", type:"tertawa"}, {icon:"😢", label:"Sedih", type:"sedih"}, {icon:"😡", label:"Marah", type:"marah"}] },
+            { text: "Ada hantu di TV", correct: "takut", options: [{icon:"😨", label:"Takut", type:"takut"}, {icon:"😀", label:"Senang", type:"senang"}, {icon:"😴", label:"Ngantuk", type:"ngantuk"}] }
+        ];
+
+        // Pipe Types: 0:Empty, 1:Vertical(║), 2:Horizontal(═), 3:CornerNE(╚), 4:CornerSE(╔), 5:CornerSW(╗), 6:CornerNW(╝)
+        // Visuals using Unicode Box Drawing
+        const PIPE_CHARS = { 1: "║", 2: "═", 3: "╚", 4: "╔", 5: "╗", 6: "╝" };
+
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
 
-        const SKILL_NAMES = { maze: 'Navigasi', block: 'Spasial', memory: 'Memori', secret: 'Logika', analysis: 'Analisis', pattern: 'Pola', math: 'Numerasi' };
+        const SKILL_NAMES = { 
+            maze: 'Navigasi', block: 'Spasial', memory: 'Memori', secret: 'Logika', analysis: 'Analisis', 
+            pattern: 'Pola', math: 'Numerasi', attention: 'Atensi', empathy: 'Empati', planning: 'Rencana'
+        };
 
         // --- AUDIO ENGINE ---
         const playSound = (type) => {
@@ -236,19 +235,27 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_7_1');
+                const saved = localStorage.getItem('jelajah_beta_v1_8');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
                     dailyChallenge: { lastPlayed: null }, 
-                    stats: { maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0}, analysis:{w:0,l:0}, pattern:{w:0,l:0}, math:{w:0,l:0} },
+                    stats: { 
+                        maze:{w:0,l:0}, block:{w:0,l:0}, memory:{w:0,l:0}, secret:{w:0,l:0}, analysis:{w:0,l:0}, 
+                        pattern:{w:0,l:0}, math:{w:0,l:0}, attention:{w:0,l:0}, empathy:{w:0,l:0}, planning:{w:0,l:0}
+                    },
                     maze: { level: 0, score: 0 }, block: { level: 0, score: 0 },
-                    memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }, analysis: { level: 0, score: 0 }, pattern: { level: 0, score: 0 }, math: { level: 0, score: 0 }
+                    memory: { level: 0, score: 0 }, secret: { level: 0, score: 0 }, analysis: { level: 0, score: 0 }, 
+                    pattern: { level: 0, score: 0 }, math: { level: 0, score: 0 }, attention: { level: 0, score: 0 },
+                    empathy: { level: 0, score: 0 }, planning: { level: 0, score: 0 }
                 };
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    if(!parsed.math) parsed.math = { level: 0, score: 0 };
-                    if(!parsed.stats.math) parsed.stats.math = { w:0, l:0 };
+                    // Migration for new skills
+                    ['attention','empathy','planning'].forEach(k => {
+                        if(!parsed[k]) parsed[k] = { level: 0, score: 0 };
+                        if(!parsed.stats[k]) parsed.stats[k] = { w:0, l:0 };
+                    });
                     return { ...defaultData, ...parsed };
                 }
                 return defaultData;
@@ -259,8 +266,9 @@
             const [wrongId, setWrongId] = useState(null);
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
+            const attentionTimerRef = useRef(null);
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_7_1', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_8', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -294,13 +302,17 @@
                 }
             }, [puzzle, activeGame]);
 
+            // Cleanup Attention Timer
+            useEffect(() => {
+                return () => { if (attentionTimerRef.current) clearTimeout(attentionTimerRef.current); };
+            }, []);
+
             // --- HELPER: ASSET INJECTION ---
             const getActivePool = (basePool) => {
                 const unlocked = userData.unlockedRewards.map(i => REWARD_ITEMS[i]);
                 return [...basePool, ...unlocked];
             };
 
-            // Helpers
             const rotateMatrix = (matrix) => {
                 const rows = matrix.length; const cols = matrix[0].length;
                 let newMatrix = Array.from({ length: cols }, () => Array(rows).fill(0));
@@ -388,11 +400,8 @@
                 if (level >= 5) { itemCount = 4; duration = 4; optionCount = 3; }
                 if (level >= 15) { itemCount = 5; duration = 3; optionCount = 4; }
                 if (level >= 25) { itemCount = 6; duration = 3; optionCount = 4; }
-                
-                // INJECT UNLOCKED ASSETS
                 const pool = getActivePool(BASE_MEMORY);
                 const shuffledPool = [...pool].sort(() => 0.5 - Math.random());
-                
                 const shownItems = shuffledPool.slice(0, itemCount);
                 const targetItem = shownItems[Math.floor(Math.random() * shownItems.length)];
                 const notShown = shuffledPool.slice(itemCount); const distractors = notShown.slice(0, optionCount - 1);
@@ -426,11 +435,9 @@
 
             const generateAnalysis = (customLevel = null) => {
                 const level = customLevel !== null ? customLevel : userData.analysis.level;
-                let gridSize = 2; // 2x2 = 4 items
-                if (level >= 5) gridSize = 3; // 3x3 = 9 items
+                let gridSize = 2; 
+                if (level >= 5) gridSize = 3; 
                 const totalItems = gridSize * gridSize;
-                
-                // INJECT ASSETS
                 const pool = getActivePool(BASE_ANALYSIS);
                 const baseIcon = pool[Math.floor(Math.random() * pool.length)];
                 
@@ -440,7 +447,7 @@
 
                 if (level < 5) {
                     let otherIcons = pool.filter(e => e !== baseIcon);
-                    if(otherIcons.length === 0) otherIcons = ["❓"]; // Fallback
+                    if(otherIcons.length === 0) otherIcons = ["❓"];
                     targetIcon = otherIcons[Math.floor(Math.random() * otherIcons.length)];
                 } else if (level < 15) {
                     isRotationDiff = true;
@@ -470,7 +477,6 @@
                 const seqLength = Math.floor(Math.random() * 3) + 4; // 4-6
                 let fullSequence = []; let optionsPool = []; let logicType = '';
 
-                // INJECT ASSETS into pattern pool
                 const customPool = getActivePool(BASE_PATTERN);
 
                 if (difficulty === 1) { // AB
@@ -525,33 +531,27 @@
 
             const generateMath = (customLevel = null) => {
                 const level = customLevel !== null ? customLevel : userData.math.level;
-                // Item Pool (Standard + Unlocked) - only allow simple items
-                const pool = getActivePool(NUMERACY_ITEMS).filter(x => typeof x === 'string'); // safety
+                const pool = getActivePool(NUMERACY_ITEMS).filter(x => typeof x === 'string'); 
                 const itemIcon = pool[Math.floor(Math.random() * pool.length)];
 
                 let leftVal = 0; let rightVal = 0; let targetDiff = 0;
                 let optionCount = 3;
 
-                // Levels logic
                 if (level < 10) { 
-                    // Counting: Right is 0. Add X to balance.
                     leftVal = Math.floor(Math.random() * 5) + 1; 
                     rightVal = 0;
                     targetDiff = leftVal;
                 } else if (level < 20) {
-                    // Comparison/Addition: Right has some items. Add diff.
                     leftVal = Math.floor(Math.random() * 8) + 2; 
                     rightVal = Math.floor(Math.random() * (leftVal - 1)) + 1;
                     targetDiff = leftVal - rightVal;
                 } else {
-                    // Logic: Harder additions
                     leftVal = Math.floor(Math.random() * 10) + 5;
                     rightVal = Math.floor(Math.random() * (leftVal - 2)) + 1;
                     targetDiff = leftVal - rightVal;
                     optionCount = 4;
                 }
 
-                // Options
                 let optionsVals = [targetDiff];
                 while(optionsVals.length < optionCount) {
                     let r = Math.max(1, targetDiff + (Math.floor(Math.random() * 5) - 2));
@@ -559,17 +559,67 @@
                 }
 
                 setPuzzle({
-                    gameType: 'math',
-                    itemIcon: itemIcon,
-                    leftVal: leftVal,
-                    rightVal: rightVal,
+                    gameType: 'math', itemIcon: itemIcon, leftVal: leftVal, rightVal: rightVal,
                     options: optionsVals.sort(()=>0.5-Math.random()).map((val, i)=>({
-                        id: i, icon: val, isTarget: val === targetDiff, val: val // icon is number here
+                        id: i, icon: val, isTarget: val === targetDiff, val: val 
                     })),
-                    targetId: 'dummy',
-                    instruction: "Seimbangkan timbangannya!"
+                    targetId: 'dummy', instruction: "Seimbangkan timbangannya!"
                 });
             };
+
+            // --- NEW SKILLS GENERATORS ---
+
+            const generateAttention = (customLevel = null) => {
+                // Game logic handled in Render because it's real-time
+                const pool = getActivePool(BASE_MEMORY);
+                const target = pool[Math.floor(Math.random()*pool.length)];
+                setPuzzle({ gameType: 'attention', targetIcon: target, instruction: `Tangkap ${target} !`, score: 0, items: [] });
+            };
+
+            const generateEmpathy = (customLevel = null) => {
+                const scenario = EMOTION_SCENARIOS[Math.floor(Math.random() * EMOTION_SCENARIOS.length)];
+                setPuzzle({
+                    gameType: 'empathy',
+                    scenario: scenario.text,
+                    options: scenario.options.sort(()=>0.5-Math.random()).map((o,i) => ({
+                        id: i, icon: o.icon, label: o.label, isTarget: o.type === scenario.correct
+                    })),
+                    instruction: "Apa yang dia rasakan?"
+                });
+            };
+
+            const generatePlanning = (customLevel = null) => {
+                // Simplified pipe game: 3x3 Grid. Center is fixed. Corners rotate.
+                // Level 1: Simply rotate straight pipes.
+                const level = customLevel !== null ? customLevel : userData.planning.level;
+                
+                // Pre-defined simple layout for beta stability
+                // S = Start, E = End, 1-6 = Pipes
+                let grid = [
+                    {type: 'start', r:0, c:0, rot:0, fixed:true}, {type: 2, r:0, c:1, rot:0, correct:0}, {type: 3, r:0, c:2, rot:0, correct:180},
+                    {type: 0, r:1, c:0}, {type: 0, r:1, c:1}, {type: 1, r:1, c:2, rot:0, correct:0},
+                    {type: 0, r:2, c:0}, {type: 0, r:2, c:1}, {type: 'end', r:2, c:2, rot:0, fixed:true}
+                ];
+
+                // Randomize initial rotation for non-fixed
+                grid = grid.map(cell => {
+                    if(!cell.fixed && cell.type > 0) {
+                        // Random rotation: 0, 90, 180, 270
+                        let rnd = Math.floor(Math.random() * 4) * 90;
+                        // Ensure it's not starting correct purely by chance (make it engaging)
+                        if(rnd === cell.correct) rnd = (rnd + 90) % 360;
+                        return {...cell, rot: rnd};
+                    }
+                    return cell;
+                });
+
+                setPuzzle({
+                    gameType: 'planning',
+                    grid: grid,
+                    instruction: "Sambungkan pipa air!"
+                });
+            };
+
 
             // --- CONTROLLERS ---
             const startGame = (type, mode) => {
@@ -586,6 +636,9 @@
                         case 'analysis': generateAnalysis(lv); break;
                         case 'pattern': generatePattern(lv); break;
                         case 'math': generateMath(lv); break;
+                        case 'attention': generateAttention(lv); break;
+                        case 'empathy': generateEmpathy(lv); break;
+                        case 'planning': generatePlanning(lv); break;
                     }
                 }, 50);
             };
@@ -594,7 +647,7 @@
                 if (isDailyDone()) return;
                 setActiveGame('daily');
                 setScreen('game');
-                const games = ['maze', 'block', 'memory', 'secret', 'analysis', 'pattern', 'math'];
+                const games = Object.keys(SKILL_NAMES); // All 10 skills
                 const randomType = games[Math.floor(Math.random() * games.length)];
                 
                 setTimeout(() => {
@@ -607,33 +660,30 @@
                         case 'analysis': generateAnalysis(diff); break;
                         case 'pattern': generatePattern(diff); break;
                         case 'math': generateMath(diff); break;
+                        case 'attention': generateAttention(diff); break;
+                        case 'empathy': generateEmpathy(diff); break;
+                        case 'planning': generatePlanning(diff); break;
                     }
                 }, 50);
             };
 
             const nextLevel = () => {
                 if(activeGame === 'daily') { setScreen('menu'); return; }
-                switch(activeGame) {
-                    case 'maze': generateMaze(); break;
-                    case 'block': generateBlock(); break;
-                    case 'memory': generateMemory(); break;
-                    case 'secret': generateSecret(); break;
-                    case 'analysis': generateAnalysis(); break;
-                    case 'pattern': generatePattern(); break;
-                    case 'math': generateMath(); break;
-                }
+                const types = {
+                    maze: generateMaze, block: generateBlock, memory: generateMemory,
+                    secret: generateSecret, analysis: generateAnalysis, pattern: generatePattern,
+                    math: generateMath, attention: generateAttention, empathy: generateEmpathy,
+                    planning: generatePlanning
+                };
+                if(types[activeGame]) types[activeGame]();
             };
 
             const handleAnswer = (opt) => {
                 if (feedback === 'correct') return;
                 
-                // Visual feedback for scale
-                if (activeGame === 'math' || (activeGame === 'daily' && puzzle.gameType === 'math')) {
-                    if (opt.isTarget) {
-                        // Correct: Just visual success handled by main flow
-                    } else {
-                         // Logic for tilt animation could be complex, simple wobble for now handled by class
-                    }
+                // Special handling for scale visual
+                if (activeGame === 'math' && !opt.isTarget) {
+                    // Logic for tilt can be added here if needed
                 }
 
                 if (opt.isTarget) {
@@ -673,6 +723,89 @@
                 }
             };
 
+            // ATTENTION LOGIC (Real-time spawning)
+            useEffect(() => {
+                if (puzzle && puzzle.gameType === 'attention' && !feedback) {
+                    const spawnInterval = 800; // Spawn every 800ms
+                    attentionTimerRef.current = setInterval(() => {
+                        setPuzzle(prev => {
+                            if(!prev || prev.items.length > 5) return prev; // Limit items
+                            const isTarget = Math.random() > 0.6;
+                            const id = Date.now();
+                            const newItem = {
+                                id: id,
+                                icon: isTarget ? prev.targetIcon : "💣", // Bomb as distractor
+                                x: Math.random() * 240, // Container width approx
+                                y: Math.random() * 240,
+                                isTarget: isTarget
+                            };
+                            return { ...prev, items: [...prev.items, newItem] };
+                        });
+                    }, spawnInterval);
+                }
+                return () => clearInterval(attentionTimerRef.current);
+            }, [puzzle, feedback]);
+
+            const handleAttentionClick = (item) => {
+                if (item.isTarget) {
+                    playSound('correct');
+                    // Remove item
+                    setPuzzle(prev => ({...prev, items: prev.items.filter(i => i.id !== item.id), score: prev.score + 1}));
+                    if(puzzle.score >= 4) { // Win condition: hit 5 targets
+                        setFeedback('correct');
+                        setTimeout(() => {
+                            // Logic similar to handleAnswer
+                             setUserData(p => ({
+                                ...p, stars: p.stars + 10,
+                                stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
+                                [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
+                            }));
+                            setScreen('result');
+                            setFeedback(null);
+                        }, 500);
+                    }
+                } else {
+                    playSound('wrong');
+                    // Lose logic
+                    setUserData(p => ({ 
+                        ...p, lives: Math.max(0, p.lives-1), 
+                        stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], l: p.stats[activeGame].l + 1 } },
+                        lastLifeLost: p.lives===3?Date.now():p.lastLifeLost 
+                    }));
+                    setPuzzle(prev => ({...prev, items: prev.items.filter(i => i.id !== item.id)})); // Remove bomb
+                }
+            };
+
+            // PLANNING LOGIC
+            const rotatePipe = (idx) => {
+                if (feedback) return;
+                setPuzzle(prev => {
+                    const newGrid = [...prev.grid];
+                    const cell = newGrid[idx];
+                    if (cell.fixed || cell.type === 0) return prev;
+                    
+                    cell.rot = (cell.rot + 90) % 360;
+                    
+                    // Check win
+                    const allCorrect = newGrid.every(c => c.fixed || c.type === 0 || c.rot === c.correct);
+                    if (allCorrect) {
+                        playSound('correct');
+                        setFeedback('correct');
+                        setTimeout(() => {
+                             setUserData(p => ({
+                                ...p, stars: p.stars + 10,
+                                stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
+                                [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
+                            }));
+                            setScreen('result');
+                            setFeedback(null);
+                        }, 500);
+                    }
+                    return { ...prev, grid: newGrid };
+                });
+            };
+
+
             // --- RENDER HELPERS ---
             const renderOptionGrid = (indices, gridSize, pattern, isRotated) => {
                 let matrix = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
@@ -696,34 +829,37 @@
                     const s = stats[key]; const total = s.w + s.l;
                     return total === 0 ? 0 : (s.w / total);
                 };
-                // 7 Skills
-                const rates = [
-                    getWinRate('maze'), getWinRate('block'), getWinRate('memory'), 
-                    getWinRate('secret'), getWinRate('analysis'), getWinRate('pattern'), getWinRate('math')
-                ];
-                // 7 Angles (approx 51.4 deg)
-                const angles = [-90, -38.5, 12.8, 64.2, 115.7, 167.1, 218.5];
-                const center = 110; const radius = 80;
+                
+                // 10 SKILLS
+                const keys = ['maze','block','memory','secret','analysis','pattern','math','attention','empathy','planning'];
+                const labels = ['Nav','Spa','Mem','Log','Ana','Pol','Num','Ate','Emp','Ren'];
+                const rates = keys.map(k => getWinRate(k));
+                
+                // 10 Points -> 36 degrees each
+                // Start -90 (Top)
+                const angles = Array.from({length: 10}, (_, i) => -90 + (i * 36));
+                
+                const center = 120; const radius = 90; // slightly bigger
                 const points = angles.map((angle, i) => {
                     const r = radius * rates[i];
                     const rad = angle * (Math.PI / 180);
-                    return `${center + r * Math.cos(rad)},${100 + r * Math.sin(rad)}`;
+                    return `${center + r * Math.cos(rad)},${120 + r * Math.sin(rad)}`;
                 }).join(" ");
+                
                 return (
                     <div className="radar-chart-container">
-                        <span className="radar-label p1">Navigasi</span>
-                        <span className="radar-label p2">Spasial</span>
-                        <span className="radar-label p3">Memori</span>
-                        <span className="radar-label p4">Logika</span>
-                        <span className="radar-label p5">Analisis</span>
-                        <span className="radar-label p6">Pola</span>
-                        <span className="radar-label p7">Numerasi</span>
-                        <svg width="220" height="220" viewBox="0 0 220 220" style={{background:'#1e293b', borderRadius:'50%'}}>
-                            {[20, 40, 60, 80].map(r => {
-                                const pts = angles.map(a => { const rad = a * (Math.PI / 180); return `${center + r * Math.cos(rad)},${100 + r * Math.sin(rad)}`; }).join(" ");
+                        {angles.map((angle, i) => {
+                            const rad = angle * (Math.PI / 180);
+                            const x = center + 105 * Math.cos(rad);
+                            const y = 120 + 105 * Math.sin(rad);
+                            return <span key={i} className="radar-label" style={{left: x-25, top: y-6}}>{labels[i]}</span>
+                        })}
+                        <svg width="240" height="240" viewBox="0 0 240 240" style={{background:'#1e293b', borderRadius:'50%'}}>
+                            {[22.5, 45, 67.5, 90].map(r => {
+                                const pts = angles.map(a => { const rad = a * (Math.PI / 180); return `${center + r * Math.cos(rad)},${120 + r * Math.sin(rad)}`; }).join(" ");
                                 return <polygon key={r} points={pts} fill="none" stroke="#334155" strokeWidth="1"/>
                             })}
-                            {angles.map((a, i) => { const rad = a * (Math.PI / 180); return <line key={i} x1={center} y1={100} x2={center + 80*Math.cos(rad)} y2={100 + 80*Math.sin(rad)} stroke="#334155" /> })}
+                            {angles.map((a, i) => { const rad = a * (Math.PI / 180); return <line key={i} x1={center} y1={120} x2={center + 90*Math.cos(rad)} y2={120 + 90*Math.sin(rad)} stroke="#334155" /> })}
                             <polygon points={points} fill="rgba(245, 158, 11, 0.5)" stroke="#F59E0B" strokeWidth="2" />
                         </svg>
                     </div>
@@ -735,7 +871,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.7.2</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.8 - 10 Skills</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -749,17 +885,19 @@
                         </button>
                     </div>
 
-                    {['maze', 'block', 'memory', 'secret', 'analysis', 'pattern', 'math'].map(game => (
-                        <div key={game} onClick={() => startGame(game, 'continue')} className="game-card">
-                            <div className="game-card-title">
-                                <span>{SKILL_NAMES[game]}</span>
-                                <span className="text-[10px] text-slate-400 font-normal">Lv {userData[game].level + 1}</span>
+                    <div className="grid grid-cols-2 gap-2 mb-20">
+                    {Object.keys(SKILL_NAMES).map(game => (
+                        <div key={game} onClick={() => startGame(game, 'continue')} className="game-card" style={{flexDirection:'column', alignItems:'flex-start', gap:'5px'}}>
+                            <div className="game-card-title text-sm">{SKILL_NAMES[game]}</div>
+                            <div className="flex justify-between w-full items-end">
+                                <span className="text-[10px] text-slate-400">Lv {userData[game].level + 1}</span>
+                                <span className="text-amber-500">▶</span>
                             </div>
-                            <div className="text-2xl text-amber-500 animate-pulse">▶</div>
                         </div>
                     ))}
+                    </div>
                     
-                    <div className="text-center text-slate-500 text-[10px] mt-4 pb-4">Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}</div>
+                    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-2 text-center text-slate-500 text-[10px] border-t border-amber-500 max-w-[500px] mx-auto">Energi: {userData.lives}/3 {regenTimer} • Bintang: {userData.stars}</div>
                 </div>
             );
 
@@ -767,20 +905,20 @@
                 <div className="app-container p-6">
                     <h2 className="text-xl font-bold text-white mb-2 text-center">📊 STATISTIK SKILL</h2>
                     <RadarChart />
-                    <div className="grid gap-2 mt-4">
-                        {['maze', 'block', 'memory', 'secret', 'analysis', 'pattern', 'math'].map(g => {
+                    <div className="grid grid-cols-2 gap-2 mt-4 text-[10px]">
+                        {Object.keys(SKILL_NAMES).map(g => {
                             const stats = userData.stats[g];
                             const total = stats.w + stats.l;
                             const rate = total > 0 ? Math.round((stats.w/total)*100) : 0;
                             return (
-                                <div key={g} className="bg-slate-800 p-3 rounded-lg flex justify-between items-center">
-                                    <span className="text-white font-bold capitalize text-sm">{SKILL_NAMES[g]}</span>
-                                    <span className="text-slate-400 text-xs">{rate}% Akurasi ({stats.w}/{total})</span>
+                                <div key={g} className="bg-slate-800 p-2 rounded-lg flex justify-between items-center">
+                                    <span className="text-white font-bold">{SKILL_NAMES[g]}</span>
+                                    <span className="text-slate-400">{rate}%</span>
                                 </div>
                             )
                         })}
                     </div>
-                    <button onClick={()=>setScreen('menu')} className="menu-btn mt-auto">KEMBALI</button>
+                    <button onClick={()=>setScreen('menu')} className="menu-btn mt-4">KEMBALI</button>
                 </div>
             );
 
@@ -849,7 +987,7 @@
                             <div className="w-full flex flex-col items-center h-full">
                                 <h2 className="instruction-text">{puzzle.instruction}</h2>
                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
-                                    {/* MAZE */}
+                                    {/* EXISTING GAMES */}
                                     {puzzle.gameType === 'maze' && (
                                         <>
                                             <div className="maze-arrows-box">{puzzle.arrows.map((a, i) => <span key={i}>{a}</span>)}</div>
@@ -860,7 +998,6 @@
                                             </div>
                                         </>
                                     )}
-                                    {/* BLOCK */}
                                     {puzzle.gameType === 'block' && (
                                         <div className="block-target-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.gridState.map((status, i) => (
@@ -868,7 +1005,6 @@
                                             ))}
                                         </div>
                                     )}
-                                    {/* MEMORY */}
                                     {puzzle.gameType === 'memory' && (
                                         <>
                                             {puzzle.phase === 'memorize' ? (
@@ -881,7 +1017,6 @@
                                             )}
                                         </>
                                     )}
-                                    {/* SECRET */}
                                     {puzzle.gameType === 'secret' && (
                                         <div className="w-full flex flex-col items-center">
                                             <div className="code-legend">
@@ -890,7 +1025,6 @@
                                             <div className="code-question-box">{puzzle.question.map((q, i) => <div key={i} className="question-icon">{q}</div>)}<div className="text-4xl text-white font-bold ml-2">= ?</div></div>
                                         </div>
                                     )}
-                                    {/* ANALYSIS */}
                                     {puzzle.gameType === 'analysis' && (
                                         <div className="analysis-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.options.map((opt, i) => (
@@ -902,7 +1036,6 @@
                                             ))}
                                         </div>
                                     )}
-                                    {/* PATTERN */}
                                     {puzzle.gameType === 'pattern' && (
                                         <div className="w-full">
                                             <div className="pattern-train">
@@ -914,7 +1047,6 @@
                                             </div>
                                         </div>
                                     )}
-                                    {/* NUMERASI (TIMBANGAN) - REVISED SIZE */}
                                     {puzzle.gameType === 'math' && (
                                         <div className="scale-container">
                                             <div className="scale-beam-wrapper" style={{
@@ -937,16 +1069,65 @@
                                             <div className="scale-base"></div>
                                         </div>
                                     )}
+                                    
+                                    {/* --- NEW GAMES --- */}
+
+                                    {/* ATENSI (RADAR FOKUS) */}
+                                    {puzzle.gameType === 'attention' && (
+                                        <div className="w-full text-center">
+                                            <div className="text-3xl mb-2">{puzzle.targetIcon}</div>
+                                            <div className="attention-area">
+                                                {puzzle.items.map(item => (
+                                                    <div key={item.id} className="attention-target"
+                                                        style={{left: item.x, top: item.y}}
+                                                        onMouseDown={() => handleAttentionClick(item)}
+                                                        onTouchStart={() => handleAttentionClick(item)}>
+                                                        {item.icon}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-2 text-slate-400">Skor: {puzzle.score}/5</div>
+                                        </div>
+                                    )}
+
+                                    {/* EMPATI (DETEKTIF RASA) */}
+                                    {puzzle.gameType === 'empathy' && (
+                                        <div className="w-full text-center">
+                                            <div className="bg-slate-800 p-6 rounded-xl border-2 border-slate-600 mb-6">
+                                                <div className="text-4xl mb-4">📖</div>
+                                                <p className="text-xl text-white font-bold">"{puzzle.scenario}"</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* PERENCANAAN (PIPA) */}
+                                    {puzzle.gameType === 'planning' && (
+                                        <div className="w-full flex justify-center">
+                                            <div className="pipe-grid" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
+                                                {puzzle.grid.map((cell, i) => (
+                                                    <div key={i} onClick={() => rotatePipe(i)}
+                                                        className={`pipe-cell ${cell.type === 'start' ? 'start' : cell.type === 'end' ? 'end' : ''}`}
+                                                        style={{transform: `rotate(${cell.rot}deg)`}}>
+                                                        {cell.type === 'start' ? '💧' : cell.type === 'end' ? '🪣' : cell.type === 0 ? '' : PIPE_CHARS[cell.type]}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                 </div>
                                 
-                                {puzzle.gameType !== 'analysis' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
+                                {/* OPTIONS BUTTONS */}
+                                {puzzle.gameType !== 'analysis' && puzzle.gameType !== 'attention' && puzzle.gameType !== 'planning' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                     <div className={`option-grid ${puzzle.options.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                         {puzzle.options.map((opt, i) => (
                                             <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
                                                 {puzzle.gameType === 'maze' ? opt.icon : 
                                                  puzzle.gameType === 'block' ? renderOptionGrid(opt.indices, puzzle.gridSize, puzzle.gridPattern, opt.isRotated) :
                                                  puzzle.gameType === 'secret' ? <span className="text-3xl font-bold">{opt.text}</span> : 
-                                                 puzzle.gameType === 'math' ? <span className="text-2xl font-bold flex gap-1">{opt.val} <span className="text-sm">{puzzle.itemIcon}</span></span> : opt.icon}
+                                                 puzzle.gameType === 'math' ? <span className="text-2xl font-bold flex gap-1">{opt.val} <span className="text-sm">{puzzle.itemIcon}</span></span> : 
+                                                 puzzle.gameType === 'empathy' ? <><span className="text-3xl">{opt.icon}</span><span className="label-text">{opt.label}</span></> :
+                                                 opt.icon}
                                             </button>
                                         ))}
                                     </div>
