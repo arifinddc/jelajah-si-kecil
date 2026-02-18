@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.5</title>
+    <title>Jelajah Si Kecil - Beta v1.5.1</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -76,6 +76,7 @@
         .analysis-btn { background: #334155; border: 2px solid #475569; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; aspect-ratio: 1; transition: transform 0.1s; box-shadow: 0 4px 0 #1e293b; }
         .analysis-btn:active { transform: scale(0.95); box-shadow: 0 1px 0 #1e293b; }
         .analysis-btn.wrong-anim { animation: shake 0.3s; background: #EF4444; border-color: #991B1B; }
+        .analysis-btn.correct-anim { background: #4ADE80; border-color: #166534; box-shadow: 0 4px 0 #166534; animation: popIn 0.3s; }
 
         /* UI Common */
         .option-grid { display: grid; gap: 10px; width: 100%; max-width: 360px; margin-top: auto; }
@@ -178,7 +179,7 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_5');
+                const saved = localStorage.getItem('jelajah_beta_v1_5_1');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
@@ -202,7 +203,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_5', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_5_1', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -529,7 +530,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.5</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.5.1</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -685,7 +686,7 @@
                                         <div className="analysis-grid" style={{gridTemplateColumns: `repeat(${puzzle.gridSize}, 1fr)`}}>
                                             {puzzle.options.map((opt, i) => (
                                                 <button key={i} onClick={() => handleAnswer(opt)}
-                                                    className={`analysis-btn ${wrongId === opt.id ? 'wrong-anim' : ''}`}
+                                                    className={`analysis-btn ${feedback==='correct' && opt.isTarget ? 'correct-anim' : ''} ${wrongId === opt.id ? 'wrong-anim' : ''}`}
                                                     style={opt.style}>
                                                     {opt.icon}
                                                 </button>
