@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Jelajah Si Kecil - Beta v1.8.1</title>
+    <title>Jelajah Si Kecil - Beta v1.8.2</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -95,6 +95,11 @@
         .scale-item { font-size: 1rem; animation: popIn 0.3s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); margin: -2px; } 
         .scale-slot { width: 28px; height: 28px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 0.8rem; }
 
+        /* Queens Prototype */
+        .queens-grid { display: grid; gap: 2px; background: #1E293B; padding: 6px; border-radius: 8px; border: 4px solid #475569; margin: 0 auto 15px auto; width: 100%; max-width: 320px; aspect-ratio: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .queens-cell { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; cursor: pointer; border-radius: 4px; transition: transform 0.1s, background-color 0.2s; user-select: none; border: 1px solid rgba(0,0,0,0.15); }
+        .queens-cell:active { transform: scale(0.9); }
+
         /* UI Common */
         .option-grid { display: grid; gap: 8px; width: 100%; max-width: 340px; margin-top: auto; margin-bottom: 10px; }
         .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
@@ -125,8 +130,8 @@
             position: relative; overflow: hidden; 
             cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .game-card.maintenance { filter: grayscale(1); opacity: 0.7; }
-        .game-card:active { transform: scale(0.98); box-shadow: 0 2px 0 #1e293b; border-color: #F59E0B; }
+        .game-card.maintenance { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+        .game-card:active:not(.maintenance) { transform: scale(0.98); box-shadow: 0 2px 0 #1e293b; border-color: #F59E0B; }
         .game-card-title { font-size: 1.3rem; font-weight: bold; color: white; display: flex; flex-direction: column; }
         
         .menu-btn { 
@@ -164,7 +169,6 @@
         // --- DATA & ASSETS ---
         const BLOCK_PATTERNS = ['linear-gradient(135deg, #3B82F6, #2563EB)', 'linear-gradient(135deg, #EF4444, #DC2626)', 'linear-gradient(135deg, #10B981, #059669)', 'linear-gradient(135deg, #F59E0B, #D97706)', 'linear-gradient(135deg, #8B5CF6, #7C3AED)'];
         
-        // ASSETS POOLS
         const BASE_MEMORY = ["🐱", "🐶", "🦁", "🐸", "🐵", "🍎", "🍌", "🍇", "🍉", "🍓", "🚗", "🚀", "⚽", "🏀"];
         const BASE_ANALYSIS = ["😀", "😎", "🚀", "🐱", "🐶", "🍎", "⚽", "🚗"];
         const BASE_PATTERN = ["🔴","🔵","🟢","🟡","🟧","🔺","⭐","🔷"];
@@ -173,35 +177,40 @@
         const GEOMETRY_EMOJIS = ["🔺", "🟥", "⬠", "⬡"]; 
         const NUMERACY_ITEMS = ["🍎", "🍊", "🍋", "🧁", "📦"];
 
-        // EXPANDED EMOTION SCENARIOS (20+)
+        // SIMPLIFIED EMOTION SCENARIOS
         const EMOTION_DB = [
-            // Level 1: Basic (Senang, Sedih, Marah)
-            { level: 1, text: "Dapat hadiah sepeda", correct: "senang", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 1, text: "Es krim jatuh ke tanah", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 1, text: "Mainan direbut teman", correct: "marah", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 1, text: "Ibu pulang kerja", correct: "senang", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 1, text: "Kaki tersandung batu", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            
-            // Level 2: + Kaget, Takut, Bosan
-            { level: 5, text: "Ada petir menggelegar!", correct: "kaget", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
-            { level: 5, text: "Dikejar anjing galak", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 5, text: "Menunggu antrian panjang", correct: "bosan", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
-            { level: 5, text: "Tiba-tiba balon meletus", correct: "kaget", options: [{icon:"😲", label:"Kaget"}, {icon:"😢", label:"Sedih"}, {icon:"😴", label:"Bosan"}] },
-            { level: 5, text: "Listrik mati gelap gulita", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😀", label:"Senang"}, {icon:"😂", label:"Tertawa"}] },
+            { text: "Dapat kado", correct: "senang", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { text: "Jatuh luka", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { text: "Mainan direbut", correct: "marah", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { text: "Ada petir!", correct: "kaget", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
+            { text: "Dikejar anjing", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
+            { text: "Nunggu lama", correct: "bosan", options: [{icon:"😲", label:"Kaget"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Bosan"}] },
+            { text: "Banyak sampah", correct: "jijik", options: [{icon:"🤢", label:"Jijik"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Ngantuk"}] },
+            { text: "Juara satu", correct: "bangga", options: [{icon:"😎", label:"Bangga"}, {icon:"😢", label:"Sedih"}, {icon:"😨", label:"Takut"}] },
+            { text: "Baju kotor", correct: "malu", options: [{icon:"😳", label:"Malu"}, {icon:"😎", label:"Bangga"}, {icon:"😡", label:"Marah"}] }
+        ];
 
-            // Level 3: + Jijik, Malu, Bangga, Capek
-            { level: 10, text: "Ada kecoa di makanan", correct: "jijik", options: [{icon:"🤢", label:"Jijik"}, {icon:"😀", label:"Senang"}, {icon:"😴", label:"Ngantuk"}] },
-            { level: 10, text: "Menang lomba lari", correct: "bangga", options: [{icon:"😎", label:"Bangga"}, {icon:"😢", label:"Sedih"}, {icon:"😨", label:"Takut"}] },
-            { level: 10, text: "Celana robek di sekolah", correct: "malu", options: [{icon:"😳", label:"Malu"}, {icon:"😎", label:"Bangga"}, {icon:"😡", label:"Marah"}] },
-            { level: 10, text: "Selesai olahraga lari", correct: "capek", options: [{icon:"🥵", label:"Capek"}, {icon:"😳", label:"Malu"}, {icon:"🤢", label:"Jijik"}] },
-            { level: 10, text: "Melihat sampah bau", correct: "jijik", options: [{icon:"🤢", label:"Jijik"}, {icon:"😀", label:"Senang"}, {icon:"😎", label:"Bangga"}] },
-            
-            // Random Mix
-            { level: 1, text: "Dipuji Bu Guru", correct: "senang", options: [{icon:"😀", label:"Senang"}, {icon:"😢", label:"Sedih"}, {icon:"😡", label:"Marah"}] },
-            { level: 1, text: "Boneka kesayangan hilang", correct: "sedih", options: [{icon:"😢", label:"Sedih"}, {icon:"😀", label:"Senang"}, {icon:"😡", label:"Marah"}] },
-            { level: 5, text: "Nonton film hantu", correct: "takut", options: [{icon:"😨", label:"Takut"}, {icon:"😂", label:"Tertawa"}, {icon:"😎", label:"Bangga"}] },
-            { level: 5, text: "Badut terpeleset pisang", correct: "tertawa", options: [{icon:"😂", label:"Tertawa"}, {icon:"😢", label:"Sedih"}, {icon:"😡", label:"Marah"}] },
-            { level: 10, text: "Nilai ujian 100", correct: "bangga", options: [{icon:"😎", label:"Bangga"}, {icon:"😳", label:"Malu"}, {icon:"🤢", label:"Jijik"}] }
+        // QUEENS PROTOTYPE LEVELS
+        const QUEENS_LEVELS = [
+            { size: 4, regions: [
+                0,0,1,1,
+                0,0,1,1,
+                2,2,3,3,
+                2,2,3,3
+            ]},
+            { size: 4, regions: [
+                0,1,1,1,
+                0,0,2,1,
+                3,0,2,2,
+                3,3,3,2
+            ]},
+            { size: 5, regions: [
+                0,0,0,1,1,
+                2,0,1,1,1,
+                2,2,3,4,4,
+                2,3,3,4,4,
+                3,3,3,3,4
+            ]}
         ];
 
         const REWARD_ITEMS = ["🧸", "🚂", "🚓", "🦖", "🦄", "🎸", "⌚", "🔭", "🏰", "🪁", "💎", "👑"];
@@ -246,7 +255,7 @@
             const [activeGame, setActiveGame] = useState(null);
             
             const [userData, setUserData] = useState(() => {
-                const saved = localStorage.getItem('jelajah_beta_v1_8_1');
+                const saved = localStorage.getItem('jelajah_beta_v1_8_2');
                 const defaultData = { 
                     lives: 3, lastLifeLost: null, stars: 0,
                     unlockedRewards: [], 
@@ -262,7 +271,6 @@
                 };
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    // Migration for new skills
                     ['attention','empathy','planning'].forEach(k => {
                         if(!parsed[k]) parsed[k] = { level: 0, score: 0 };
                         if(!parsed.stats[k]) parsed.stats[k] = { w:0, l:0 };
@@ -278,7 +286,7 @@
             const [regenTimer, setRegenTimer] = useState("");
             const [memTimer, setMemTimer] = useState(100); 
 
-            useEffect(() => { localStorage.setItem('jelajah_beta_v1_8_1', JSON.stringify(userData)); }, [userData]);
+            useEffect(() => { localStorage.setItem('jelajah_beta_v1_8_2', JSON.stringify(userData)); }, [userData]);
 
             // Lives Regen
             useEffect(() => {
@@ -498,7 +506,7 @@
                 if (level >= 15) { difficulty = 3; optionCount = 4; }
                 if (level >= 25) { difficulty = 4; optionCount = 4; }
                 
-                const seqLength = Math.floor(Math.random() * 3) + 4; // 4-6
+                const seqLength = Math.floor(Math.random() * 3) + 4; 
                 let fullSequence = []; let optionsPool = []; let logicType = '';
 
                 const customPool = getActivePool(BASE_PATTERN);
@@ -592,31 +600,42 @@
             };
 
             const generateEmpathy = (customLevel = null) => {
-                const level = customLevel !== null ? customLevel : userData.empathy.level;
-                
-                // Filter scenarios based on level complexity
-                let available = [];
-                if (level < 5) available = EMOTION_DB.filter(s => s.level === 1);
-                else if (level < 10) available = EMOTION_DB.filter(s => s.level <= 5);
-                else available = EMOTION_DB; // All
-
-                const scenario = available[Math.floor(Math.random() * available.length)];
-                
+                const scenario = EMOTION_DB[Math.floor(Math.random() * EMOTION_DB.length)];
                 setPuzzle({
                     gameType: 'empathy',
                     scenario: scenario.text,
                     options: scenario.options.sort(()=>0.5-Math.random()).map((o,i) => ({
                         id: i, icon: o.icon, label: o.label, isTarget: o.label.toLowerCase() === scenario.correct.toLowerCase()
                     })),
-                    instruction: "Apa yang dia rasakan?"
+                    instruction: "Perasaannya saat ini?"
                 });
             };
+
+            // REPLACES PIPE GAME
+            const generatePlanning = (customLevel = null) => {
+                const level = customLevel !== null ? customLevel : userData.planning.level;
+                const puzzleData = QUEENS_LEVELS[level % QUEENS_LEVELS.length];
+                
+                const grid = puzzleData.regions.map((regionId, idx) => ({
+                    id: idx,
+                    region: regionId,
+                    state: 0 // 0: empty, 1: queen, 2: X
+                }));
+
+                setPuzzle({
+                    gameType: 'planning', 
+                    size: puzzleData.size,
+                    grid: grid,
+                    instruction: "Taruh 1 👑 di tiap Warna, Baris & Kolom!"
+                });
+            };
+
 
             // --- CONTROLLERS ---
             const startGame = (type, mode) => {
                 // MAINTENANCE CHECK
-                if (type === 'attention' || type === 'planning') {
-                    alert("🚧 Game ini sedang dalam perbaikan untuk peningkatan kualitas! 🚧\n\nNantikan update seru berikutnya!");
+                if (type === 'attention') {
+                    alert("🚧 Game Atensi sedang dalam perbaikan! 🚧\n\nSedang dicari permainan yang lebih seru.");
                     return;
                 }
 
@@ -634,6 +653,7 @@
                         case 'pattern': generatePattern(lv); break;
                         case 'math': generateMath(lv); break;
                         case 'empathy': generateEmpathy(lv); break;
+                        case 'planning': generatePlanning(lv); break;
                     }
                 }, 50);
             };
@@ -642,8 +662,7 @@
                 if (isDailyDone()) return;
                 setActiveGame('daily');
                 setScreen('game');
-                // EXCLUDE MAINTENANCE GAMES
-                const games = ['maze','block','memory','secret','analysis','pattern','math','empathy'];
+                const games = ['maze','block','memory','secret','analysis','pattern','math','empathy','planning'];
                 const randomType = games[Math.floor(Math.random() * games.length)];
                 
                 setTimeout(() => {
@@ -657,6 +676,7 @@
                         case 'pattern': generatePattern(diff); break;
                         case 'math': generateMath(diff); break;
                         case 'empathy': generateEmpathy(diff); break;
+                        case 'planning': generatePlanning(diff); break;
                     }
                 }, 50);
             };
@@ -666,7 +686,7 @@
                 const types = {
                     maze: generateMaze, block: generateBlock, memory: generateMemory,
                     secret: generateSecret, analysis: generateAnalysis, pattern: generatePattern,
-                    math: generateMath, empathy: generateEmpathy
+                    math: generateMath, empathy: generateEmpathy, planning: generatePlanning
                 };
                 if(types[activeGame]) types[activeGame]();
             };
@@ -702,6 +722,72 @@
                     }
                     setTimeout(() => setWrongId(null), 500);
                 }
+            };
+
+            const handleQueensClick = (idx) => {
+                if (feedback) return;
+                playSound('unlock'); 
+                setPuzzle(prev => {
+                    const newGrid = [...prev.grid];
+                    newGrid[idx].state = (newGrid[idx].state + 1) % 3;
+                    
+                    // Logic validation check
+                    const size = prev.size;
+                    const queens = newGrid.map((c, i) => c.state === 1 ? i : -1).filter(i => i !== -1);
+                    
+                    let isWin = false;
+                    if (queens.length === size) {
+                        isWin = true;
+                        const rows = new Set();
+                        const cols = new Set();
+                        const regions = new Set();
+                        
+                        for (let i = 0; i < queens.length; i++) {
+                            const q = queens[i];
+                            const r = Math.floor(q / size);
+                            const c = q % size;
+                            const reg = newGrid[q].region;
+                            
+                            // Check row, col, color overlap
+                            if (rows.has(r) || cols.has(c) || regions.has(reg)) {
+                                isWin = false; break;
+                            }
+                            rows.add(r); cols.add(c); regions.add(reg);
+                            
+                            // Check diagonal touch
+                            for (let j = i + 1; j < queens.length; j++) {
+                                const q2 = queens[j];
+                                const r2 = Math.floor(q2 / size);
+                                const c2 = q2 % size;
+                                if (Math.abs(r - r2) <= 1 && Math.abs(c - c2) <= 1) { 
+                                    isWin = false; break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (isWin) {
+                        playSound('correct');
+                        setFeedback('correct');
+                        setTimeout(() => {
+                            if(activeGame === 'daily') {
+                                const today = new Date().toDateString();
+                                setUserData(p => ({ ...p, stars: p.stars + 50, dailyChallenge: { lastPlayed: today } }));
+                                setScreen('result_daily');
+                            } else {
+                                setUserData(p => ({
+                                    ...p, stars: p.stars + 10,
+                                    stats: { ...p.stats, [activeGame]: { ...p.stats[activeGame], w: p.stats[activeGame].w + 1 } },
+                                    [activeGame]: { level: p[activeGame].level + 1, score: p[activeGame].score + 10 }
+                                }));
+                                setScreen('result');
+                            }
+                            setFeedback(null);
+                        }, 500);
+                    }
+                    
+                    return { ...prev, grid: newGrid };
+                });
             };
 
             const unlockReward = (index) => {
@@ -740,7 +826,6 @@
                 const labels = ['Nav','Spa','Mem','Log','Ana','Pol','Num','Ate','Emp','Ren'];
                 const rates = keys.map(k => getWinRate(k));
                 
-                // 10 Points -> 36 degrees each
                 const angles = Array.from({length: 10}, (_, i) => -90 + (i * 36));
                 const center = 120; const radius = 90; 
                 const points = angles.map((angle, i) => {
@@ -774,7 +859,7 @@
                 <div className="app-container p-4 overflow-y-auto">
                     <div className="text-center mt-2 mb-6">
                         <h1 className="text-2xl font-black text-white uppercase tracking-tight">Jelajah Si Kecil</h1>
-                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.8.1</p>
+                        <p className="text-amber-500 font-bold text-[10px] uppercase tracking-widest mb-4">Beta v1.8.2</p>
                         <div className="flex justify-center gap-3">
                             <button onClick={()=>setScreen('dashboard')} className="stat-badge">📊 Progress</button>
                             <button onClick={()=>setScreen('collection')} className="stat-badge">🎁 Koleksi</button>
@@ -791,21 +876,21 @@
                     <div className="grid grid-cols-2 gap-2 mb-20">
                     {Object.keys(SKILL_NAMES).map(game => (
                         <div key={game} onClick={() => startGame(game, 'continue')} 
-                             className={`game-card ${(game === 'attention' || game === 'planning') ? 'maintenance' : ''}`} 
+                             className={`game-card ${game === 'attention' ? 'maintenance' : ''}`} 
                              style={{flexDirection:'column', alignItems:'flex-start', gap:'5px'}}>
                             <div className="game-card-title text-sm">{SKILL_NAMES[game]}</div>
                             <div className="flex justify-between w-full items-end">
                                 <span className="text-[10px] text-slate-400">Lv {userData[game].level + 1}</span>
-                                <span className="text-amber-500">{(game === 'attention' || game === 'planning') ? '🛠️' : '▶'}</span>
+                                <span className="text-amber-500">{game === 'attention' ? '🛠️' : '▶'}</span>
                             </div>
                         </div>
                     ))}
                     </div>
                     
-                    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-2 text-center text-slate-500 text-[10px] border-t border-amber-500 max-w-[500px] mx-auto flex justify-center items-center gap-2">
-                        <span>Energi: {userData.lives}/3 {regenTimer}</span>
+                    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 p-2 text-center text-slate-500 text-[10px] border-t border-amber-500 max-w-[500px] mx-auto flex justify-center items-center gap-2 z-50">
+                        <span className="text-sm">❤️ {userData.lives}/3</span>
                         <button className="add-life-btn" onClick={buyLife}>+</button>
-                        <span>• Bintang: {userData.stars}</span>
+                        <span className="ml-2">⭐ {userData.stars}</span>
                     </div>
                 </div>
             );
@@ -983,12 +1068,35 @@
                                         </div>
                                     )}
                                     
-                                    {/* EMPATI (DETEKTIF RASA) - UPDATED */}
+                                    {/* EMPATI SIMPLIFIED */}
                                     {puzzle.gameType === 'empathy' && (
                                         <div className="w-full text-center">
                                             <div className="bg-slate-800 p-6 rounded-xl border-2 border-slate-600 mb-6 shadow-lg">
-                                                <div className="text-5xl mb-4">💬</div>
-                                                <p className="text-xl text-white font-bold italic">"{puzzle.scenario}"</p>
+                                                <p className="text-3xl text-white font-bold italic">"{puzzle.scenario}"</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* QUEENS PROTOTYPE (Replace Planning) */}
+                                    {puzzle.gameType === 'planning' && (
+                                        <div className="w-full flex flex-col items-center">
+                                            <div className="queens-grid" style={{gridTemplateColumns: `repeat(${puzzle.size}, 1fr)`}}>
+                                                {puzzle.grid.map((cell, i) => {
+                                                    const bgColors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']; 
+                                                    const color = bgColors[cell.region % bgColors.length];
+                                                    
+                                                    return (
+                                                        <div key={i} onClick={() => handleQueensClick(i)}
+                                                            className="queens-cell"
+                                                            style={{ backgroundColor: color, opacity: cell.state === 2 ? 0.6 : 0.85 }}>
+                                                            {cell.state === 1 ? '👑' : cell.state === 2 ? '❌' : ''}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                            <div className="mt-2 text-center text-slate-300 text-xs bg-slate-800 p-2 rounded-lg border border-slate-600">
+                                                Tap 1x: 👑 &nbsp;|&nbsp; Tap 2x: ❌ <br/>
+                                                <span className="text-[10px] text-amber-500">Aturan: 👑 Tidak boleh bersentuhan!</span>
                                             </div>
                                         </div>
                                     )}
@@ -996,7 +1104,7 @@
                                 </div>
                                 
                                 {/* OPTIONS BUTTONS */}
-                                {puzzle.gameType !== 'analysis' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
+                                {puzzle.gameType !== 'analysis' && puzzle.gameType !== 'planning' && !(puzzle.gameType === 'memory' && puzzle.phase === 'memorize') && (
                                     <div className={`option-grid ${puzzle.options.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                                         {puzzle.options.map((opt, i) => (
                                             <button key={i} onClick={() => handleAnswer(opt)} className={`btn-choice ${feedback==='correct' && opt.isTarget ? 'correct' : ''} ${wrongId === opt.id ? 'wrong' : ''}`}>
