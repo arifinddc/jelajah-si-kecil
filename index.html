@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Akademi Penyihir - AI Edition</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <title>Akademi Penyihir - AI Fix</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
 
@@ -15,126 +15,76 @@
             --btn-sec: #8e44ad;
         }
 
-        * { touch-action: none; box-sizing: border-box; }
+        * { touch-action: none; box-sizing: border-box; -webkit-user-select: none; }
 
         body {
             font-family: 'Baloo 2', cursive;
             background-color: var(--bg);
             color: white;
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100dvh; /* Dynamic height agar tidak kepotong */
-            overflow: hidden; /* Anti scroll */
-            display: flex;
-            flex-direction: column;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100dvh;
+            overflow: hidden;
+            display: flex; flex-direction: column;
         }
 
-        /* Header Stats */
         .header {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 20px;
-            flex-shrink: 0;
+            display: flex; justify-content: space-between;
+            padding: 15px 20px; flex-shrink: 0;
         }
 
         .stat {
             background: rgba(255,255,255,0.1);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 8px 18px; border-radius: 25px;
+            font-size: 20px; font-weight: 800;
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Main Game Area */
         .game-main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            gap: 15px;
+            flex-grow: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 10px; gap: 20px;
         }
 
         .question-box {
-            width: 100%;
-            max-width: 400px;
-            background: rgba(255,255,255,0.1);
-            border: 2px dashed var(--accent);
-            border-radius: 20px;
-            padding: 10px;
-            text-align: center;
+            width: 100%; max-width: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px dashed var(--accent);
+            border-radius: 25px; padding: 15px; text-align: center;
         }
 
-        .equation {
-            font-size: 35px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
+        .equation { font-size: clamp(32px, 8vw, 45px); font-weight: 800; }
 
-        /* Canvas Area */
         #canvas-container {
             position: relative;
-            width: 90vw;
-            height: 90vw;
-            max-width: 320px;
-            max-height: 320px;
-            background: white;
-            border: 6px solid #b388ff;
-            border-radius: 25px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 85vw; height: 85vw;
+            max-width: 350px; max-height: 350px;
+            background: white; border: 8px solid #b388ff;
+            border-radius: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 20px;
-        }
+        canvas { width: 100%; height: 100%; border-radius: 27px; }
 
-        /* Bottom Controls - Fixed at Bottom */
         .controls {
-            padding: 20px;
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-            flex-shrink: 0;
+            padding: 20px; display: flex; gap: 15px;
+            width: 100%; max-width: 500px; margin: 0 auto; flex-shrink: 0;
         }
 
         button {
-            flex: 1;
-            font-family: inherit;
-            font-weight: 800;
-            font-size: 18px;
-            border: none;
-            border-radius: 20px;
-            padding: 15px;
-            cursor: pointer;
-            transition: transform 0.1s;
-            color: white;
+            flex: 1; font-family: inherit; font-weight: 800;
+            font-size: 20px; border: none; border-radius: 25px;
+            padding: 18px; cursor: pointer; color: white;
+            transition: transform 0.1s, filter 0.2s;
         }
 
-        .btn-clear { background: var(--btn-sec); box-shadow: 0 5px 0 #5e3370; }
-        .btn-magic { background: var(--btn-primary); box-shadow: 0 5px 0 #b34200; }
-        
-        button:active { transform: translateY(5px); box-shadow: none; }
+        .btn-clear { background: var(--btn-sec); box-shadow: 0 6px 0 #5e3370; }
+        .btn-magic { background: var(--btn-primary); box-shadow: 0 6px 0 #b34200; }
+        button:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Loading Screen */
         #loader {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
         }
 
         .shake { animation: shake 0.4s; }
@@ -148,21 +98,19 @@
 <body>
 
     <div id="loader">
-        <h2 style="color: var(--accent);">Mempersiapkan Sihir AI...</h2>
-        <div class="stat">Mohon Tunggu ✨</div>
+        <h2 style="color: var(--accent); margin-bottom: 10px;">Mempersiapkan Sihir AI...</h2>
+        <div class="stat" id="load-status">Menghubungkan ke Awan ✨</div>
     </div>
 
     <div class="header">
         <div class="stat">❤️ <span id="hearts">5</span></div>
-        <div class="stat" id="shop-trigger">⭐ <span id="points">0</span></div>
+        <div class="stat">⭐ <span id="points">0</span></div>
     </div>
 
     <div class="game-main">
         <div class="question-box">
-            <div style="font-size: 14px; color: var(--accent);">Berapa hasil ramuan ini?</div>
-            <div class="equation" id="quest">
-                🍄 + 🍄🍄 = ?
-            </div>
+            <div style="font-size: 16px; color: var(--accent); margin-bottom: 5px;">Berapa hasil ramuan ini?</div>
+            <div class="equation" id="quest">🍄 + 🍄 = ?</div>
         </div>
 
         <div id="canvas-container">
@@ -172,53 +120,75 @@
 
     <div class="controls">
         <button class="btn-clear" onclick="clearBoard()">Hapus</button>
-        <button class="btn-magic" onclick="recognizeDigit()">Rapalkan Mantra! ✨</button>
+        <button class="btn-magic" onclick="recognizeDigit()">Mantra! ✨</button>
     </div>
 
     <script>
         let model;
+        let isAiReady = false;
         let points = 0;
         let hearts = 5;
-        let targetNum = 3;
+        let targetNum = 2;
+        
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let drawing = false;
 
-        // Load TensorFlow Model (MNIST pre-trained)
-        async function loadModel() {
-            try {
-                // Menggunakan model MNIST yang di-host secara publik
-                model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json');
-                document.getElementById('loader').style.display = 'none';
-                initGame();
-            } catch (e) {
-                console.error("Gagal load AI", e);
-                alert("Koneksi internet diperlukan untuk memanggil sihir AI!");
-            }
-        }
+        // --- SISTEM LOADING TAHAN BANTING ---
+        async function init() {
+            initCanvasSize();
+            
+            // Timeout 5 detik: Jika AI kelamaan, paksa masuk ke game
+            const forcedStart = setTimeout(() => {
+                if (!isAiReady) {
+                    console.warn("AI lambat dimuat. Menggunakan mode cadangan.");
+                    hideLoader();
+                }
+            }, 5000);
 
-        function initGame() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = 280; // Resolusi internal untuk AI
-            canvas.height = 280;
-            ctx.strokeStyle = "black"; // AI dilatih dengan background putih, tulisan hitam/gelap
-            ctx.lineWidth = 18;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
+            try {
+                // Gunakan URL model yang lebih stabil
+                model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json');
+                isAiReady = true;
+                document.getElementById('load-status').innerText = "Sihir Siap! 🪄";
+                setTimeout(hideLoader, 500);
+            } catch (e) {
+                console.error("AI Error:", e);
+                document.getElementById('load-status').innerText = "Mode Manual Aktif 🛠️";
+                setTimeout(hideLoader, 1000);
+            }
+            
             generateQuestion();
         }
 
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function initCanvasSize() {
+            const size = 300; 
+            canvas.width = size;
+            canvas.height = size;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, size, size);
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 20;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+        }
+
+        // --- LOGIKA PERMAINAN ---
         function generateQuestion() {
             const n1 = Math.floor(Math.random() * 4) + 1;
             const n2 = Math.floor(Math.random() * 4) + 1;
             targetNum = n1 + n2;
-            const icons = ['🍄', '🍃', '🔮', '⭐'];
+            const icons = ['🍄', '🍃', '🔮', '⭐', '🍎'];
             const icon = icons[Math.floor(Math.random() * icons.length)];
             document.getElementById('quest').innerHTML = `${icon.repeat(n1)} + ${icon.repeat(n2)} = ?`;
             clearBoard();
         }
 
-        // Drawing Logic
+        // --- DRAWING ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -230,12 +200,7 @@
         }
 
         function start(e) { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); }
-        function move(e) { 
-            if(!drawing) return; 
-            const p = getPos(e); 
-            ctx.lineTo(p.x, p.y); 
-            ctx.stroke(); 
-        }
+        function move(e) { if(!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
         function end() { drawing = false; }
 
         canvas.addEventListener('mousedown', start);
@@ -250,38 +215,52 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // AI RECOGNITION PROCESS
+        // --- AI RECOGNITION ---
         async function recognizeDigit() {
-            // 1. Ambil data gambar dari kanvas
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
-            // 2. Pre-processing untuk TensorFlow (28x28 grayscale)
-            const prediction = tf.tidy(() => {
-                let tensor = tf.browser.fromPixels(imgData, 1) // Ambil 1 channel (grayscale)
-                    .resizeNearestNeighbor([28, 28]) // Ubah ke 28x28
-                    .mean(2) // Pastikan grayscale
-                    .expandDims(2)
-                    .expandDims(0)
-                    .toFloat();
-                
-                // Invert warna (karena MNIST dilatih dengan latar belakang hitam, tulisan putih)
-                // Di kanvas kita: latar putih (255), tulisan hitam (0)
-                tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0));
-                
-                return model.predict(tensor);
-            });
+            // Cek apakah ada coretan
+            const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let hasContent = false;
+            for(let i = 0; i < pixels.length; i += 4) {
+                if(pixels[i] < 200) { hasContent = true; break; }
+            }
 
-            const result = await prediction.data();
-            const predictedDigit = result.indexOf(Math.max(...result));
+            if (!hasContent) {
+                alert("Tulis angka jawabannya dulu ya!");
+                return;
+            }
+
+            let finalGuess;
+
+            if (isAiReady) {
+                const prediction = tf.tidy(() => {
+                    let tensor = tf.browser.fromPixels(canvas, 1)
+                        .resizeNearestNeighbor([28, 28])
+                        .mean(2)
+                        .expandDims(2)
+                        .expandDims(0)
+                        .toFloat();
+                    
+                    // Invert: White background -> Black background
+                    tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0));
+                    return model.predict(tensor);
+                });
+
+                const data = await prediction.data();
+                finalGuess = data.indexOf(Math.max(...data));
+            } else {
+                // Mode Cadangan: Karena AI gagal, kita beri toleransi 
+                // Jika anak menulis sesuatu, kita anggap mereka sedang berusaha
+                finalGuess = targetNum; 
+            }
             
-            checkLogic(predictedDigit);
+            processResult(finalGuess);
         }
 
-        function checkLogic(guess) {
+        function processResult(guess) {
             if (guess === targetNum) {
                 points += 10;
                 document.getElementById('points').innerText = points;
-                alert("HEBAT! Mantramu benar, itu angka " + guess + "! ✨");
+                alert("WAAAH HEBAT! ✨ Itu benar angka " + guess + "!");
                 generateQuestion();
             } else {
                 hearts--;
@@ -290,30 +269,19 @@
                 setTimeout(() => document.getElementById('canvas-container').classList.remove('shake'), 400);
                 
                 if (hearts <= 0) {
-                    if (points >= 20) {
-                        if(confirm("Hati habis! Tukar 20 Bintang untuk 3 Hati?")) {
-                            points -= 20; hearts = 3;
-                            document.getElementById('points').innerText = points;
-                            document.getElementById('hearts').innerText = hearts;
-                        } else { resetGame(); }
-                    } else {
-                        alert("Yah, energi sihirmu habis. Ayo mulai lagi!");
-                        resetGame();
-                    }
+                    alert("Energi sihir habis! Ayo coba lagi dari awal.");
+                    points = 0; hearts = 5;
+                    document.getElementById('points').innerText = points;
+                    document.getElementById('hearts').innerText = hearts;
+                    generateQuestion();
                 } else {
-                    alert("Ayo coba lagi, sepertinya mantramu kurang tepat!");
+                    alert("Hmm, kelihatannya mantranya kurang tepat. Coba tulis lagi ya!");
+                    clearBoard();
                 }
             }
         }
 
-        function resetGame() {
-            points = 0; hearts = 5;
-            document.getElementById('points').innerText = points;
-            document.getElementById('hearts').innerText = hearts;
-            generateQuestion();
-        }
-
-        loadModel();
+        window.onload = init;
     </script>
 </body>
 </html>
