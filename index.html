@@ -3,388 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Akademi Penyihir Cilik - Pro</title>
+    <title>Akademi Penyihir - AI Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
 
         :root {
-            --primary-bg: #2c003e;
-            --accent-color: #ffd700;
-            --magic-pink: #ff1493;
-            --success-green: #2ecc71;
-            --error-red: #e74c3c;
+            --bg: #1a0633;
+            --accent: #ffd700;
+            --btn-primary: #ff5e00;
+            --btn-sec: #8e44ad;
         }
+
+        * { touch-action: none; box-sizing: border-box; }
 
         body {
             font-family: 'Baloo 2', cursive;
-            background-color: var(--primary-bg);
+            background-color: var(--bg);
             color: white;
             margin: 0;
             padding: 0;
+            width: 100vw;
+            height: 100dvh; /* Dynamic height agar tidak kepotong */
+            overflow: hidden; /* Anti scroll */
             display: flex;
             flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none;
         }
 
-        /* Header Stats: Hearts & Points */
-        .stats-bar {
-            width: 90%;
+        /* Header Stats */
+        .header {
             display: flex;
             justify-content: space-between;
             padding: 10px 20px;
-            font-size: 20px;
-            font-weight: 800;
-            z-index: 10;
+            flex-shrink: 0;
         }
 
-        .stat-item {
+        .stat {
             background: rgba(255,255,255,0.1);
             padding: 5px 15px;
             border-radius: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .heart { color: #ff4757; font-size: 24px; }
-        .coin { color: var(--accent-color); font-size: 24px; }
-
-        /* Game Area */
-        #game-container {
-            flex: 1;
-            width: 100%;
-            max-width: 500px;
+        /* Main Game Area */
+        .game-main {
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
+            align-items: center;
+            justify-content: center;
             padding: 10px;
-            box-sizing: border-box;
+            gap: 15px;
         }
 
-        .question-card {
-            background: rgba(255, 255, 255, 0.15);
-            border: 3px dashed var(--accent-color);
+        .question-box {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed var(--accent);
             border-radius: 20px;
-            padding: 15px;
+            padding: 10px;
             text-align: center;
         }
 
         .equation {
-            font-size: clamp(30px, 8vw, 45px);
+            font-size: 35px;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             gap: 10px;
         }
 
-        /* Canvas Stylings */
-        #canvas-wrapper {
+        /* Canvas Area */
+        #canvas-container {
             position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            max-height: 40vh;
+            width: 90vw;
+            height: 90vw;
+            max-width: 320px;
+            max-height: 320px;
             background: white;
-            border: 8px solid #8a2be2;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 6px solid #b388ff;
+            border-radius: 25px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         canvas {
             width: 100%;
             height: 100%;
-            border-radius: 22px;
-            cursor: crosshair;
+            border-radius: 20px;
         }
 
-        .canvas-hint {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ddd;
-            font-size: 24px;
-            pointer-events: none;
-            opacity: 0.5;
-        }
-
-        /* Buttons */
-        .action-area {
+        /* Bottom Controls - Fixed at Bottom */
+        .controls {
+            padding: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 15px;
             width: 100%;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+            max-width: 450px;
+            margin: 0 auto;
+            flex-shrink: 0;
         }
 
         button {
+            flex: 1;
             font-family: inherit;
             font-weight: 800;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.1s, filter 0.2s;
-        }
-
-        .btn-main {
-            background: linear-gradient(135deg, #ff4500, #ff8c00);
-            color: white;
-            padding: 15px 30px;
-            font-size: 22px;
-            box-shadow: 0 5px 0 #cc3700;
-            width: 100%;
-        }
-
-        .btn-sec {
-            background: #9370db;
-            color: white;
-            padding: 10px 20px;
             font-size: 18px;
-            box-shadow: 0 5px 0 #6a5acd;
+            border: none;
+            border-radius: 20px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            color: white;
         }
 
-        button:active {
-            transform: translateY(4px);
-            box-shadow: none;
+        .btn-clear { background: var(--btn-sec); box-shadow: 0 5px 0 #5e3370; }
+        .btn-magic { background: var(--btn-primary); box-shadow: 0 5px 0 #b34200; }
+        
+        button:active { transform: translateY(5px); box-shadow: none; }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
-        /* Animations */
+        .shake { animation: shake 0.4s; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
             75% { transform: translateX(10px); }
         }
-
-        .shake { animation: shake 0.4s ease-in-out; }
-
-        .celebrate {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 100px;
-            pointer-events: none;
-            z-index: 100;
-            display: none;
-        }
-
-        /* Shop Modal */
-        #shop-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: #4b0082;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            border: 4px solid var(--accent-color);
-        }
     </style>
 </head>
 <body>
 
-    <div class="stats-bar">
-        <div class="stat-item">
-            <span class="heart">❤️</span> <span id="heart-count">5</span>
-        </div>
-        <div class="stat-item" onclick="openShop()" style="cursor: pointer;">
-            <span class="coin">⭐</span> <span id="point-count">0</span>
-        </div>
+    <div id="loader">
+        <h2 style="color: var(--accent);">Mempersiapkan Sihir AI...</h2>
+        <div class="stat">Mohon Tunggu ✨</div>
     </div>
 
-    <div id="game-container">
-        <div class="question-card">
-            <div id="question-text" style="margin-bottom: 5px; color: var(--accent-color);">Berapa hasil ramuan ini?</div>
-            <div class="equation" id="equation-display">
-                </div>
-        </div>
+    <div class="header">
+        <div class="stat">❤️ <span id="hearts">5</span></div>
+        <div class="stat" id="shop-trigger">⭐ <span id="points">0</span></div>
+    </div>
 
-        <div id="canvas-wrapper">
-            <div class="canvas-hint" id="hint-text">Tulis Angkanya</div>
-            <canvas id="drawingCanvas"></canvas>
-        </div>
-
-        <div class="action-area">
-            <div class="btn-group">
-                <button class="btn-sec" onclick="clearCanvas()">Hapus</button>
-                <button class="btn-main" onclick="checkAnswer()">Rapalkan Mantra! ✨</button>
+    <div class="game-main">
+        <div class="question-box">
+            <div style="font-size: 14px; color: var(--accent);">Berapa hasil ramuan ini?</div>
+            <div class="equation" id="quest">
+                🍄 + 🍄🍄 = ?
             </div>
         </div>
+
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
     </div>
 
-    <div class="celebrate" id="win-anim">✨🏆✨</div>
-
-    <div id="shop-modal">
-        <div class="modal-content">
-            <h2>Butuh Hati Baru?</h2>
-            <p>Tukar 10 Bintang ⭐ untuk 1 Hati ❤️</p>
-            <button class="btn-main" onclick="buyHeart()">Tukar Sekarang!</button>
-            <button class="btn-sec" onclick="closeShop()" style="margin-top:10px;">Nanti Saja</button>
-        </div>
+    <div class="controls">
+        <button class="btn-clear" onclick="clearBoard()">Hapus</button>
+        <button class="btn-magic" onclick="recognizeDigit()">Rapalkan Mantra! ✨</button>
     </div>
 
     <script>
-        let hearts = 5;
+        let model;
         let points = 0;
-        let currentAnswer = 0;
-
-        const canvas = document.getElementById('drawingCanvas');
-        const ctx = canvas.getContext('2d');
+        let hearts = 5;
+        let targetNum = 3;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let drawing = false;
 
-        // Setup Canvas
-        function initCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            ctx.strokeStyle = "#ff1493";
-            ctx.lineWidth = 12;
-            ctx.lineCap = "round";
+        // Load TensorFlow Model (MNIST pre-trained)
+        async function loadModel() {
+            try {
+                // Menggunakan model MNIST yang di-host secara publik
+                model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json');
+                document.getElementById('loader').style.display = 'none';
+                initGame();
+            } catch (e) {
+                console.error("Gagal load AI", e);
+                alert("Koneksi internet diperlukan untuk memanggil sihir AI!");
+            }
         }
 
-        window.addEventListener('load', () => {
-            initCanvas();
-            newLevel();
-        });
+        function initGame() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = 280; // Resolusi internal untuk AI
+            canvas.height = 280;
+            ctx.strokeStyle = "black"; // AI dilatih dengan background putih, tulisan hitam/gelap
+            ctx.lineWidth = 18;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            const n1 = Math.floor(Math.random() * 4) + 1;
+            const n2 = Math.floor(Math.random() * 4) + 1;
+            targetNum = n1 + n2;
+            const icons = ['🍄', '🍃', '🔮', '⭐'];
+            const icon = icons[Math.floor(Math.random() * icons.length)];
+            document.getElementById('quest').innerHTML = `${icon.repeat(n1)} + ${icon.repeat(n2)} = ?`;
+            clearBoard();
+        }
 
         // Drawing Logic
-        function startDrawing(e) {
-            drawing = true;
-            document.getElementById('hint-text').style.display = 'none';
-            const pos = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-        }
-
-        function stopDrawing() { drawing = false; }
-
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
             };
         }
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-        canvas.addEventListener('touchend', stopDrawing);
+        function start(e) { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); }
+        function move(e) { 
+            if(!drawing) return; 
+            const p = getPos(e); 
+            ctx.lineTo(p.x, p.y); 
+            ctx.stroke(); 
+        }
+        function end() { drawing = false; }
 
-        // Game Logic
-        function newLevel() {
-            const num1 = Math.floor(Math.random() * 3) + 1;
-            const num2 = Math.floor(Math.random() * 3) + 1;
-            currentAnswer = num1 + num2;
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
+        canvas.addEventListener('touchend', end);
 
-            const icons = ['🍄', '🍃', '🔮', '⭐', '🧪'];
-            const icon = icons[Math.floor(Math.random() * icons.length)];
-
-            document.getElementById('equation-display').innerHTML = `
-                <span>${icon.repeat(num1)}</span>
-                <span style="color:var(--accent-color)">+</span>
-                <span>${icon.repeat(num2)}</span>
-                <span style="color:var(--accent-color)">=</span>
-                <span>?</span>
-            `;
-            clearCanvas();
+        function clearBoard() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        function checkAnswer() {
-            // Karena ini purwarupa tanpa AI OCR, kita simulasikan: 
-            // Setiap kali anak menulis (kanvas tidak kosong), kita anggap benar untuk menjaga semangat.
-            // Di produksi nyata, kita gunakan library seperti Tesseract.js atau TensorFlow.js
+        // AI RECOGNITION PROCESS
+        async function recognizeDigit() {
+            // 1. Ambil data gambar dari kanvas
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             
-            const isCanvasEmpty = ctx.getImageData(0,0,canvas.width,canvas.height).data.every(p => p === 0);
+            // 2. Pre-processing untuk TensorFlow (28x28 grayscale)
+            const prediction = tf.tidy(() => {
+                let tensor = tf.browser.fromPixels(imgData, 1) // Ambil 1 channel (grayscale)
+                    .resizeNearestNeighbor([28, 28]) // Ubah ke 28x28
+                    .mean(2) // Pastikan grayscale
+                    .expandDims(2)
+                    .expandDims(0)
+                    .toFloat();
+                
+                // Invert warna (karena MNIST dilatih dengan latar belakang hitam, tulisan putih)
+                // Di kanvas kita: latar putih (255), tulisan hitam (0)
+                tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0));
+                
+                return model.predict(tensor);
+            });
 
-            if (isCanvasEmpty) {
-                alert("Tulis jawabanmu dulu di papan ajaib!");
-                return;
-            }
+            const result = await prediction.data();
+            const predictedDigit = result.indexOf(Math.max(...result));
+            
+            checkLogic(predictedDigit);
+        }
 
-            // Simulasi deteksi sederhana (90% kemungkinan benar untuk prototype)
-            const isCorrect = Math.random() > 0.1; 
-
-            if (isCorrect) {
-                points += 5;
-                updateStats();
-                showSuccess();
+        function checkLogic(guess) {
+            if (guess === targetNum) {
+                points += 10;
+                document.getElementById('points').innerText = points;
+                alert("HEBAT! Mantramu benar, itu angka " + guess + "! ✨");
+                generateQuestion();
             } else {
                 hearts--;
-                updateStats();
-                showFailure();
+                document.getElementById('hearts').innerText = hearts;
+                document.getElementById('canvas-container').classList.add('shake');
+                setTimeout(() => document.getElementById('canvas-container').classList.remove('shake'), 400);
+                
+                if (hearts <= 0) {
+                    if (points >= 20) {
+                        if(confirm("Hati habis! Tukar 20 Bintang untuk 3 Hati?")) {
+                            points -= 20; hearts = 3;
+                            document.getElementById('points').innerText = points;
+                            document.getElementById('hearts').innerText = hearts;
+                        } else { resetGame(); }
+                    } else {
+                        alert("Yah, energi sihirmu habis. Ayo mulai lagi!");
+                        resetGame();
+                    }
+                } else {
+                    alert("Ayo coba lagi, sepertinya mantramu kurang tepat!");
+                }
             }
         }
 
-        function showSuccess() {
-            const anim = document.getElementById('win-anim');
-            anim.style.display = 'block';
-            setTimeout(() => {
-                anim.style.display = 'none';
-                newLevel();
-            }, 1500);
+        function resetGame() {
+            points = 0; hearts = 5;
+            document.getElementById('points').innerText = points;
+            document.getElementById('hearts').innerText = hearts;
+            generateQuestion();
         }
 
-        function showFailure() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            wrapper.classList.add('shake');
-            setTimeout(() => wrapper.classList.remove('shake'), 400);
-            
-            if (hearts <= 0) {
-                alert("Hati habis! Yuk tukar bintangmu.");
-                openShop();
-            }
-        }
-
-        function updateStats() {
-            document.getElementById('point-count').innerText = points;
-            document.getElementById('heart-count').innerText = hearts;
-        }
-
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('hint-text').style.display = 'block';
-        }
-
-        // Shop Logic
-        function openShop() { document.getElementById('shop-modal').style.display = 'flex'; }
-        function closeShop() { document.getElementById('shop-modal').style.display = 'none'; }
-        
-        function buyHeart() {
-            if (points >= 10) {
-                points -= 10;
-                hearts++;
-                updateStats();
-                closeShop();
-            } else {
-                alert("Bintangmu belum cukup, ayo main lagi!");
-            }
-        }
+        loadModel();
     </script>
 </body>
 </html>
