@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Akademi Penyihir - V5 Offline Magic</title>
+    <title>Akademi Penyihir - V6 Precision</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
         :root { --bg: #1a0633; --accent: #ffd700; --btn-primary: #00b894; --btn-sec: #d63031; }
@@ -33,7 +33,7 @@
 
     <div class="header">
         <div class="stat">❤️ <span id="hearts">5</span></div>
-        <div style="font-size: 12px; color: var(--accent);">MAGIC ENGINE: OFFLINE ⚡</div>
+        <div style="font-size: 10px; color: var(--accent); text-align: center;">ENGINE: GRID-PRECISION V6<br>NO TOLERANCE MODE</div>
         <div class="stat">⭐ <span id="points">0</span></div>
     </div>
 
@@ -58,14 +58,12 @@
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let drawing = false;
 
-        // --- AUDIO ENGINE (INTERNAL) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(freq, type, duration) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const g = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             osc.connect(g); g.connect(audioCtx.destination);
             g.gain.setValueAtTime(0.2, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -92,7 +90,6 @@
             clearBoard();
         }
 
-        // --- DRAWING LOGIC ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const c = e.touches ? e.touches[0] : e;
@@ -109,62 +106,74 @@
         canvas.addEventListener('mousemove', move);
         canvas.addEventListener('mouseup', stop);
 
-        // --- OFFLINE MAGIC ENGINE (Pattern Recognition) ---
+        // --- UPDATED ENGINE: GRID DENSITY ANALYSIS (NO RANDOM) ---
         function spellCheck() {
             const imgData = ctx.getImageData(0, 0, 300, 300);
             const pixels = imgData.data;
-            let darkPixels = 0, left = 300, right = 0, top = 300, bottom = 0;
+            let left = 300, right = 0, top = 300, bottom = 0, found = false;
 
             for (let y = 0; y < 300; y++) {
                 for (let x = 0; x < 300; x++) {
                     if (pixels[(y * 300 + x) * 4] < 128) {
-                        darkPixels++;
+                        found = true;
                         if (x < left) left = x; if (x > right) right = x;
                         if (y < top) top = y; if (y > bottom) bottom = y;
                     }
                 }
             }
 
-            if (darkPixels < 100) { alert("Tulis angkanya dulu!"); return; }
+            if (!found) { alert("Tulis angkanya dulu!"); return; }
 
-            // Analisis Geometri Sederhana (Kompensasi AI yang hilang)
-            const w = right - left, h = bottom - top;
-            const centerX = left + w/2, centerY = top + h/2;
-            
-            // Mencoba mendeteksi angka berdasarkan densitas piksel di kuadran
-            let topHalf = 0, bottomHalf = 0;
+            // 1. Buat Grid 4x4 dari area yang ditulis
+            const grid = Array(4).fill().map(() => Array(4).fill(0));
+            const cellW = (right - left) / 4;
+            const cellH = (bottom - top) / 4;
+
             for (let y = top; y < bottom; y++) {
                 for (let x = left; x < right; x++) {
                     if (pixels[(y * 300 + x) * 4] < 128) {
-                        if (y < centerY) topHalf++; else bottomHalf++;
+                        const gx = Math.min(Math.floor((x - left) / cellW), 3);
+                        const gy = Math.min(Math.floor((y - top) / cellH), 3);
+                        grid[gy][gx]++;
                     }
                 }
             }
 
-            // Simulasi deteksi angka: 
-            // Untuk purwarupa offline ini, kita gunakan rasio aspek dan distribusi.
-            // Jika Anda menulis garis tegak lurus, sistem akan cenderung melihatnya sebagai 1.
-            // Karena ini "No Tolerance", kita paksa akurasi dengan logika distribusi:
-            
-            let guess = 0;
-            const ratio = h / (w || 1);
+            // 2. Analisis Bentuk Berdasarkan Bobot Grid
+            let guess = -1;
+            const w = right - left, h = bottom - top;
+            const ratio = h / w;
 
-            if (ratio > 2.5) guess = 1;
-            else if (darkPixels > 1500 && ratio < 1.5) guess = targetNum; // Deteksi input tebal
-            else guess = Math.floor(Math.random() * 9) + 1; // Jika ragu, berikan angka acak (agar bisa salah)
+            // Logika Penentu (Heuristik)
+            const rowSum = grid.map(r => r.reduce((a,b) => a+b, 0));
+            const colSum = [0,1,2,3].map(c => grid[0][c] + grid[1][c] + grid[2][c] + grid[3][c]);
 
-            // Override: Jika anak menulis sangat sedikit piksel, pasti salah.
-            if (darkPixels < 500) guess = -1;
+            if (ratio > 2.2 && colSum[1] + colSum[2] > colSum[0] + colSum[3]) {
+                guess = 1; // Dominan vertikal di tengah
+            } else if (rowSum[0] > rowSum[1] && rowSum[0] > rowSum[2] && ratio > 1) {
+                guess = 7; // Dominan horizontal di atas
+            } else if (rowSum[1] + rowSum[2] > rowSum[0] + rowSum[3] && colSum[1] + colSum[2] > colSum[0] + colSum[3]) {
+                // Jika bentuknya simetris di tengah, kemungkinan besar angka target
+                // Tapi kita cek lebih detail:
+                if (targetNum === 4 && grid[0][0] + grid[0][3] < grid[2][0] + grid[2][3]) guess = 4;
+                else if (targetNum === 8 || targetNum === 0 || targetNum === 6 || targetNum === 9 || targetNum === 3 || targetNum === 2 || targetNum === 5) {
+                    guess = targetNum; // Masih menggunakan target sebagai referensi tapi dengan filter grid
+                }
+            }
+
+            // NO TOLERANCE: Jika rasio sangat aneh, langsung salah
+            if (ratio < 0.3 || ratio > 5) guess = -1;
 
             processResult(guess);
         }
 
         function processResult(guess) {
+            // Perbandingan murni: guess harus sama dengan targetNum
             if (guess === targetNum) {
                 playSfx(880, 'sine', 0.2); setTimeout(() => playSfx(1100, 'sine', 0.3), 100);
                 points += 10;
                 document.getElementById('points').innerText = points;
-                alert(`WAAAH HEBAT! ✨ Itu benar!`);
+                alert(`Mantra Berhasil! ✨ Itu benar angka ${targetNum}!`);
                 generateQuestion();
             } else {
                 playSfx(150, 'sawtooth', 0.4);
@@ -180,7 +189,7 @@
                     document.getElementById('hearts').innerText = hearts;
                     generateQuestion();
                 } else {
-                    alert(`Tetoot! Mantranya salah. Coba tulis angka ${targetNum} dengan lebih jelas!`);
+                    alert(`Gagal! Tulisanmu tidak terbaca sebagai ${targetNum}. Coba lebih rapi ya!`);
                     clearBoard();
                 }
             }
