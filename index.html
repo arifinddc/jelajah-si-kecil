@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Akademi Penyihir - V3 (Anti Cheat)</title>
+    <title>Akademi Penyihir - V4 (Sound & Stable)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
@@ -12,7 +12,7 @@
         :root {
             --bg: #1a0633;
             --accent: #ffd700;
-            --btn-primary: #00b894; /* Warna tombol baru agar terlihat bedanya */
+            --btn-primary: #00b894;
             --btn-sec: #d63031;
         }
 
@@ -30,7 +30,7 @@
 
         .header {
             display: flex; justify-content: space-between;
-            padding: 15px 15px; flex-shrink: 0; align-items: center;
+            padding: 15px; flex-shrink: 0; align-items: center;
         }
 
         .stat {
@@ -88,12 +88,14 @@
 
         .btn-clear { background: var(--btn-sec); box-shadow: 0 6px 0 #a02020; }
         .btn-magic { background: var(--btn-primary); box-shadow: 0 6px 0 #008a6e; }
+        .btn-retry { background: #0984e3; box-shadow: 0 6px 0 #0762a8; margin-top: 15px; padding: 10px 30px; }
         button:active { transform: translateY(4px); box-shadow: none; }
 
         #loader {
             position: fixed; inset: 0; background: var(--bg);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 9999;
+            text-align: center; padding: 20px;
         }
 
         .shake { animation: shake 0.4s; }
@@ -109,16 +111,15 @@
     <div id="loader">
         <h2 style="color: var(--accent); margin-bottom: 10px;">Mempersiapkan Sihir AI...</h2>
         <div class="stat" id="load-status">Menghubungkan ke Awan ✨</div>
+        <button id="retry-btn" class="btn-retry" style="display: none;" onclick="initAI()">Coba Hubungkan Lagi 🔄</button>
     </div>
 
     <div class="header">
         <div class="stat">❤️ <span id="hearts">5</span></div>
-        
         <div class="ai-eye-container">
             <span>Mata AI</span>
             <canvas id="ai-eye" width="28" height="28" style="background: white; width: 28px; height: 28px; border-radius: 4px; border: 1px solid #333;"></canvas>
         </div>
-
         <div class="stat">⭐ <span id="points">0</span></div>
     </div>
 
@@ -147,40 +148,76 @@
         
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        
         const eyeCanvas = document.getElementById('ai-eye');
         const eyeCtx = eyeCanvas.getContext('2d');
         let drawing = false;
 
-        async function init() {
-            initCanvasSize();
+        // --- SISTEM SUARA (AUDIO API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'win') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'draw') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            }
+        }
+
+        // --- INISIALISASI AI ---
+        async function initAI() {
+            document.getElementById('load-status').innerText = "Menghubungkan ke Awan ✨";
+            document.getElementById('retry-btn').style.display = 'none';
             try {
+                await tf.ready(); // Pemanasan WebGL (Mencegah iOS Stuck)
                 model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json');
                 isAiReady = true;
                 document.getElementById('load-status').innerText = "Sihir Siap! 🪄";
                 setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
             } catch (e) {
                 console.error("AI Error:", e);
-                document.getElementById('load-status').innerText = "Koneksi Terputus. Mohon Refresh Halaman! 📡";
+                document.getElementById('load-status').innerText = "Koneksi Terputus atau Lemah 📡\nError: " + e.message;
+                document.getElementById('retry-btn').style.display = 'inline-block';
             }
+        }
+
+        function init() {
+            initCanvasSize();
+            initAI();
             generateQuestion();
         }
 
         function initCanvasSize() {
             const size = 300; 
-            canvas.width = size;
-            canvas.height = size;
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, size, size);
-            
-            // WAJIB HITAM agar kontras AI sempurna
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 25; 
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-
-            eyeCtx.fillStyle = "white";
-            eyeCtx.fillRect(0,0,28,28);
+            canvas.width = size; canvas.height = size;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, size, size);
+            ctx.strokeStyle = "black"; ctx.lineWidth = 25; 
+            ctx.lineCap = "round"; ctx.lineJoin = "round";
+            eyeCtx.fillStyle = "white"; eyeCtx.fillRect(0,0,28,28);
         }
 
         function generateQuestion() {
@@ -203,9 +240,12 @@
             };
         }
 
-        function start(e) { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); }
+        function start(e) { 
+            drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); 
+            if(audioCtx.state === 'suspended') audioCtx.resume(); // Unlock audio iOS
+        }
         function move(e) { if(!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
-        function end() { drawing = false; }
+        function end() { if(drawing) { playSound('draw'); } drawing = false; }
 
         canvas.addEventListener('mousedown', start);
         canvas.addEventListener('mousemove', move);
@@ -215,13 +255,11 @@
         canvas.addEventListener('touchend', end);
 
         function clearBoard() {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            eyeCtx.fillStyle = "white";
-            eyeCtx.fillRect(0,0,28,28);
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            eyeCtx.fillStyle = "white"; eyeCtx.fillRect(0,0,28,28);
+            if(audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // --- ALGORITMA PRE-PROCESSING BARU YANG FLAWLESS ---
         async function recognizeDigit() {
             if (!isAiReady) { alert("Sihir AI belum siap!"); return; }
 
@@ -230,11 +268,10 @@
             let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
             let hasContent = false;
 
-            // Cari batas goresan (Bounding Box)
             for (let y = 0; y < canvas.height; y++) {
                 for (let x = 0; x < canvas.width; x++) {
                     const i = (y * canvas.width + x) * 4;
-                    if (pixels[i] < 100) { // Jika piksel berwarna gelap
+                    if (pixels[i] < 100) {
                         hasContent = true;
                         if (x < minX) minX = x;
                         if (y < minY) minY = y;
@@ -248,29 +285,23 @@
 
             let width = maxX - minX;
             let height = maxY - minY;
-            
-            // Buat margin pelindung (Square Padding) agar gambar tidak gepeng
             let maxDim = Math.max(width, height);
             let boxSize = Math.max(maxDim * 1.4, 50); 
 
-            // Canvas perantara agar tidak error saat ukuran melebihi batas
             const padCanvas = document.createElement('canvas');
             padCanvas.width = boxSize; padCanvas.height = boxSize;
             const pCtx = padCanvas.getContext('2d');
             pCtx.fillStyle = "white"; pCtx.fillRect(0, 0, boxSize, boxSize);
             
-            // Taruh goresan tepat di tengah canvas perantara
             pCtx.drawImage(canvas, minX, minY, width, height, (boxSize - width)/2, (boxSize - height)/2, width, height);
 
-            // Pindahkan ke Mata AI (ukuran 28x28)
             eyeCtx.fillStyle = "white";
             eyeCtx.fillRect(0,0,28,28);
             eyeCtx.drawImage(padCanvas, 0, 0, boxSize, boxSize, 0, 0, 28, 28);
 
-            // Prediksi AI Murni
             const prediction = tf.tidy(() => {
                 let tensor = tf.browser.fromPixels(eyeCanvas, 1).toFloat();
-                tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0)); // Balik warna
+                tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0)); 
                 return model.predict(tensor.expandDims(0));
             });
 
@@ -282,11 +313,13 @@
 
         function processResult(guess) {
             if (guess === targetNum) {
+                playSound('win');
                 points += 10;
                 document.getElementById('points').innerText = points;
                 alert("WAAAH HEBAT! ✨ Itu benar angka " + guess + "!");
                 generateQuestion();
             } else {
+                playSound('wrong');
                 hearts--;
                 document.getElementById('hearts').innerText = hearts;
                 document.getElementById('canvas-container').classList.add('shake');
@@ -299,7 +332,6 @@
                     document.getElementById('hearts').innerText = hearts;
                     generateQuestion();
                 } else {
-                    // Murni memberitahu AI melihat angka berapa
                     alert(`Tetoot! Jawaban salah.\n\nKamu harusnya menulis angka ${targetNum}, tapi Mata AI membacanya sebagai angka ${guess}. Coba tulis lebih jelas lagi ya!`);
                     clearBoard();
                 }
