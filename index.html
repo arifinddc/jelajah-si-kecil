@@ -134,35 +134,22 @@
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let drawing = false;
 
-        // --- SISTEM LOADING TAHAN BANTING ---
         async function init() {
             initCanvasSize();
-            
-            // Timeout 5 detik: Jika AI kelamaan, paksa masuk ke game
-            const forcedStart = setTimeout(() => {
-                if (!isAiReady) {
-                    console.warn("AI lambat dimuat. Menggunakan mode cadangan.");
-                    hideLoader();
-                }
-            }, 5000);
-
             try {
-                // Gunakan URL model yang lebih stabil
+                // Tunggu AI memuat. Tidak ada paksaan mulai (fallback) jika gagal.
                 model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mnist_v1/model.json');
                 isAiReady = true;
                 document.getElementById('load-status').innerText = "Sihir Siap! 🪄";
-                setTimeout(hideLoader, 500);
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                }, 500);
             } catch (e) {
                 console.error("AI Error:", e);
-                document.getElementById('load-status').innerText = "Mode Manual Aktif 🛠️";
-                setTimeout(hideLoader, 1000);
+                // Jika gagal, layar terkunci meminta refresh agar anak tidak bermain tanpa penilaian
+                document.getElementById('load-status').innerText = "Koneksi Terputus. Mohon Refresh Halaman! 📡";
             }
-            
             generateQuestion();
-        }
-
-        function hideLoader() {
-            document.getElementById('loader').style.display = 'none';
         }
 
         function initCanvasSize() {
@@ -177,7 +164,6 @@
             ctx.lineJoin = "round";
         }
 
-        // --- LOGIKA PERMAINAN ---
         function generateQuestion() {
             const n1 = Math.floor(Math.random() * 4) + 1;
             const n2 = Math.floor(Math.random() * 4) + 1;
@@ -188,7 +174,6 @@
             clearBoard();
         }
 
-        // --- DRAWING ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -215,13 +200,30 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // --- AI RECOGNITION ---
+        // --- AI RECOGNITION TINGKAT TINGGI (DENGAN AUTO-CROP) ---
         async function recognizeDigit() {
-            // Cek apakah ada coretan
-            const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            if (!isAiReady) {
+                alert("Sihir AI belum siap! Coba refresh halamannya ya.");
+                return;
+            }
+
+            // 1. Ambil data piksel dan cari Bounding Box (Batas Coretan Anak)
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imgData.data;
             let hasContent = false;
-            for(let i = 0; i < pixels.length; i += 4) {
-                if(pixels[i] < 200) { hasContent = true; break; }
+            let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const i = (y * canvas.width + x) * 4;
+                    if (pixels[i] < 200) { // Jika piksel berwarna gelap
+                        hasContent = true;
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
             }
 
             if (!hasContent) {
@@ -229,34 +231,41 @@
                 return;
             }
 
-            let finalGuess;
+            // 2. Pre-processing: Potong dan Pusatkan Coretan ke tengah Kanvas Mini 28x28
+            const width = maxX - minX;
+            const height = maxY - minY;
+            
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 28;
+            tempCanvas.height = 28;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = "white";
+            tCtx.fillRect(0, 0, 28, 28);
+            
+            // Atur agar besaran coretan maksimal 20 piksel (menyisakan margin 4 piksel untuk AI)
+            const scale = Math.min(20 / Math.max(width, 1), 20 / Math.max(height, 1));
+            const newW = width * scale;
+            const newH = height * scale;
+            const dx = (28 - newW) / 2;
+            const dy = (28 - newH) / 2;
+            
+            tCtx.drawImage(canvas, minX, minY, width, height, dx, dy, newW, newH);
 
-            if (isAiReady) {
-                const prediction = tf.tidy(() => {
-                    let tensor = tf.browser.fromPixels(canvas, 1)
-                        .resizeNearestNeighbor([28, 28])
-                        .mean(2)
-                        .expandDims(2)
-                        .expandDims(0)
-                        .toFloat();
-                    
-                    // Invert: White background -> Black background
-                    tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0));
-                    return model.predict(tensor);
-                });
+            // 3. Eksekusi Prediksi AI dari kanvas yang sudah disempurnakan
+            const prediction = tf.tidy(() => {
+                let tensor = tf.browser.fromPixels(tempCanvas, 1).toFloat();
+                tensor = tf.scalar(255.0).sub(tensor).div(tf.scalar(255.0)); // Inversi: latar jadi hitam, tulisan jadi putih
+                return model.predict(tensor.expandDims(0));
+            });
 
-                const data = await prediction.data();
-                finalGuess = data.indexOf(Math.max(...data));
-            } else {
-                // Mode Cadangan: Karena AI gagal, kita beri toleransi 
-                // Jika anak menulis sesuatu, kita anggap mereka sedang berusaha
-                finalGuess = targetNum; 
-            }
+            const data = await prediction.data();
+            const finalGuess = data.indexOf(Math.max(...data));
             
             processResult(finalGuess);
         }
 
         function processResult(guess) {
+            // Sekarang logika perbandingan ini murni hasil tebakan AI melawan kunci jawaban
             if (guess === targetNum) {
                 points += 10;
                 document.getElementById('points').innerText = points;
@@ -275,7 +284,7 @@
                     document.getElementById('hearts').innerText = hearts;
                     generateQuestion();
                 } else {
-                    alert("Hmm, kelihatannya mantranya kurang tepat. Coba tulis lagi ya!");
+                    alert("Hmm, sepertinya itu angka " + guess + " ya? Coba tulis angka " + targetNum + " dengan lebih jelas!");
                     clearBoard();
                 }
             }
