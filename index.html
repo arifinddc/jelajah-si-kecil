@@ -3,274 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Akademi Penyihir Cilik</title>
+    <title>Akademi Penyihir Cilik - Pro</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
 
-        body {
-            font-family: 'Baloo 2', cursive, sans-serif;
-            background-color: #2c003e; /* Warna malam ajaib */
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            touch-action: none; /* Penting untuk interaksi sentuh murni di kanvas */
+        :root {
+            --primary-bg: #2c003e;
+            --accent-color: #ffd700;
+            --magic-pink: #ff1493;
+            --success-green: #2ecc71;
+            --error-red: #e74c3c;
         }
 
-        #game-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+        body {
+            font-family: 'Baloo 2', cursive;
+            background-color: var(--primary-bg);
+            color: white;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
         }
 
-        h1 {
-            color: #ffd700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            margin-bottom: 5px;
-            font-size: 28px;
+        /* Header Stats: Hearts & Points */
+        .stats-bar {
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            font-size: 20px;
+            font-weight: 800;
+            z-index: 10;
         }
 
-        p.subtitle {
-            margin-top: 0;
-            font-size: 16px;
-            color: #d8bfd8;
-        }
-
-        .question-area {
-            background: rgba(255, 255, 255, 0.15);
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
             border-radius: 20px;
-            padding: 15px 30px;
-            margin-bottom: 20px;
-            border: 2px dashed #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .heart { color: #ff4757; font-size: 24px; }
+        .coin { color: var(--accent-color); font-size: 24px; }
+
+        /* Game Area */
+        #game-container {
+            flex: 1;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .question-card {
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px dashed var(--accent-color);
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
         }
 
         .equation {
-            font-size: 40px;
+            font-size: clamp(30px, 8vw, 45px);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
         }
 
-        .emoji-group {
-            display: flex;
-            gap: 5px;
-            font-size: 45px;
-        }
-
-        #canvas-container {
+        /* Canvas Stylings */
+        #canvas-wrapper {
             position: relative;
             width: 100%;
-            max-width: 350px;
-            background: #fff;
-            border: 6px solid #8a2be2;
-            border-radius: 25px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            overflow: hidden;
+            aspect-ratio: 1 / 1;
+            max-height: 40vh;
+            background: white;
+            border: 8px solid #8a2be2;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Label instruksi samar di latar belakang kanvas */
-        #canvas-container::before {
-            content: "Tulis di sini...";
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 22px;
+            cursor: crosshair;
+        }
+
+        .canvas-hint {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #e0e0e0;
-            font-size: 30px;
+            color: #ddd;
+            font-size: 24px;
             pointer-events: none;
-            z-index: 0;
+            opacity: 0.5;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 300px;
-            cursor: crosshair;
-            position: relative;
-            z-index: 1;
-        }
-
-        .controls {
-            margin-top: 25px;
+        /* Buttons */
+        .action-area {
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
         }
 
         button {
-            border: none;
-            padding: 15px 25px;
-            font-size: 22px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: 0.2s;
             font-family: inherit;
             font-weight: 800;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
         }
 
-        .btn-magic {
-            background: #ff4500;
+        .btn-main {
+            background: linear-gradient(135deg, #ff4500, #ff8c00);
             color: white;
-            box-shadow: 0 6px 0 #cc3700;
+            padding: 15px 30px;
+            font-size: 22px;
+            box-shadow: 0 5px 0 #cc3700;
+            width: 100%;
         }
 
-        .btn-clear {
+        .btn-sec {
             background: #9370db;
             color: white;
-            box-shadow: 0 6px 0 #6a5acd;
+            padding: 10px 20px;
+            font-size: 18px;
+            box-shadow: 0 5px 0 #6a5acd;
         }
 
         button:active {
-            transform: translateY(6px);
+            transform: translateY(4px);
             box-shadow: none;
         }
 
-        #feedback {
-            font-size: 26px;
-            font-weight: 800;
-            margin-top: 20px;
-            min-height: 40px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
-        .success { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-        .try-again { color: #ffa500; }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        .celebrate {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        /* Shop Modal */
+        #shop-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #4b0082;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 4px solid var(--accent-color);
+        }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <h1>Akademi Penyihir Cilik</h1>
-        <p class="subtitle">Bantu racik ramuan dengan menulis angkanya!</p>
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="heart">❤️</span> <span id="heart-count">5</span>
+        </div>
+        <div class="stat-item" onclick="openShop()" style="cursor: pointer;">
+            <span class="coin">⭐</span> <span id="point-count">0</span>
+        </div>
+    </div>
 
-        <div class="question-area">
-            <div class="equation">
-                <div class="emoji-group">🍄</div>
-                <div style="color: #ffd700;">+</div>
-                <div class="emoji-group">🍃🍃</div>
-                <div style="color: #ffd700;">=</div>
-                <div style="font-size: 50px; color: #fff;">?</div>
+    <div id="game-container">
+        <div class="question-card">
+            <div id="question-text" style="margin-bottom: 5px; color: var(--accent-color);">Berapa hasil ramuan ini?</div>
+            <div class="equation" id="equation-display">
+                </div>
+        </div>
+
+        <div id="canvas-wrapper">
+            <div class="canvas-hint" id="hint-text">Tulis Angkanya</div>
+            <canvas id="drawingCanvas"></canvas>
+        </div>
+
+        <div class="action-area">
+            <div class="btn-group">
+                <button class="btn-sec" onclick="clearCanvas()">Hapus</button>
+                <button class="btn-main" onclick="checkAnswer()">Rapalkan Mantra! ✨</button>
             </div>
         </div>
+    </div>
 
-        <div id="canvas-container">
-            <canvas id="magicBoard"></canvas>
+    <div class="celebrate" id="win-anim">✨🏆✨</div>
+
+    <div id="shop-modal">
+        <div class="modal-content">
+            <h2>Butuh Hati Baru?</h2>
+            <p>Tukar 10 Bintang ⭐ untuk 1 Hati ❤️</p>
+            <button class="btn-main" onclick="buyHeart()">Tukar Sekarang!</button>
+            <button class="btn-sec" onclick="closeShop()" style="margin-top:10px;">Nanti Saja</button>
         </div>
-
-        <div class="controls">
-            <button class="btn-clear" onclick="clearCanvas()">Hapus</button>
-            <button class="btn-magic" onclick="castSpell()">Rapalkan Mantra! ✨</button>
-        </div>
-
-        <div id="feedback"></div>
     </div>
 
     <script>
-        const canvas = document.getElementById('magicBoard');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let strokeCount = 0; // Menghitung seberapa banyak anak mencoret
+        let hearts = 5;
+        let points = 0;
+        let currentAnswer = 0;
 
-        // Menyesuaikan ukuran kanvas internal dengan ukuran tampilan CSS
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 15; // Garis tebal agar mudah dilihat anak
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        // Setup Canvas
+        function initCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.strokeStyle = "#ff1493";
+            ctx.lineWidth = 12;
+            ctx.lineCap = "round";
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        window.addEventListener('load', () => {
+            initCanvas();
+            newLevel();
+        });
 
-        // Mengatur gaya tinta ajaib (warna gradasi/neon)
-        ctx.strokeStyle = '#ff1493'; 
-
-        // Mouse Events (Untuk tes di Laptop)
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-
-        // Touch Events (Untuk HP/Tablet)
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing);
-
+        // Drawing Logic
         function startDrawing(e) {
-            isDrawing = true;
-            strokeCount++;
+            drawing = true;
+            document.getElementById('hint-text').style.display = 'none';
+            const pos = getPos(e);
             ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
+            ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!isDrawing) return;
-            ctx.lineTo(e.offsetX, e.offsetY);
+            if (!drawing) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
         }
 
-        function handleTouchStart(e) {
-            e.preventDefault(); // Mencegah scrolling layar
-            const touch = e.touches[0];
+        function stopDrawing() { drawing = false; }
+
+        function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            isDrawing = true;
-            strokeCount++;
-            ctx.beginPath();
-            ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
         }
 
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-            ctx.stroke();
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Game Logic
+        function newLevel() {
+            const num1 = Math.floor(Math.random() * 3) + 1;
+            const num2 = Math.floor(Math.random() * 3) + 1;
+            currentAnswer = num1 + num2;
+
+            const icons = ['🍄', '🍃', '🔮', '⭐', '🧪'];
+            const icon = icons[Math.floor(Math.random() * icons.length)];
+
+            document.getElementById('equation-display').innerHTML = `
+                <span>${icon.repeat(num1)}</span>
+                <span style="color:var(--accent-color)">+</span>
+                <span>${icon.repeat(num2)}</span>
+                <span style="color:var(--accent-color)">=</span>
+                <span>?</span>
+            `;
+            clearCanvas();
         }
 
-        function stopDrawing() {
-            isDrawing = false;
+        function checkAnswer() {
+            // Karena ini purwarupa tanpa AI OCR, kita simulasikan: 
+            // Setiap kali anak menulis (kanvas tidak kosong), kita anggap benar untuk menjaga semangat.
+            // Di produksi nyata, kita gunakan library seperti Tesseract.js atau TensorFlow.js
+            
+            const isCanvasEmpty = ctx.getImageData(0,0,canvas.width,canvas.height).data.every(p => p === 0);
+
+            if (isCanvasEmpty) {
+                alert("Tulis jawabanmu dulu di papan ajaib!");
+                return;
+            }
+
+            // Simulasi deteksi sederhana (90% kemungkinan benar untuk prototype)
+            const isCorrect = Math.random() > 0.1; 
+
+            if (isCorrect) {
+                points += 5;
+                updateStats();
+                showSuccess();
+            } else {
+                hearts--;
+                updateStats();
+                showFailure();
+            }
+        }
+
+        function showSuccess() {
+            const anim = document.getElementById('win-anim');
+            anim.style.display = 'block';
+            setTimeout(() => {
+                anim.style.display = 'none';
+                newLevel();
+            }, 1500);
+        }
+
+        function showFailure() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.classList.add('shake');
+            setTimeout(() => wrapper.classList.remove('shake'), 400);
+            
+            if (hearts <= 0) {
+                alert("Hati habis! Yuk tukar bintangmu.");
+                openShop();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('point-count').innerText = points;
+            document.getElementById('heart-count').innerText = hearts;
         }
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            strokeCount = 0;
-            const feedback = document.getElementById('feedback');
-            feedback.style.opacity = '0';
+            document.getElementById('hint-text').style.display = 'block';
         }
 
-        // Logika Pemeriksaan (Simulasi)
-        function castSpell() {
-            const feedback = document.getElementById('feedback');
-            feedback.style.opacity = '1';
-
-            // Cek apakah kanvas kosong
-            if (strokeCount === 0) {
-                feedback.className = 'try-again';
-                feedback.innerHTML = "Kuali masih kosong. Tulis angka 3 ya!";
-                return;
+        // Shop Logic
+        function openShop() { document.getElementById('shop-modal').style.display = 'flex'; }
+        function closeShop() { document.getElementById('shop-modal').style.display = 'none'; }
+        
+        function buyHeart() {
+            if (points >= 10) {
+                points -= 10;
+                hearts++;
+                updateStats();
+                closeShop();
+            } else {
+                alert("Bintangmu belum cukup, ayo main lagi!");
             }
-
-            // Simulasi apresiasi jika anak sudah mencoret sesuatu
-            feedback.className = 'success';
-            feedback.innerHTML = "BUM! 🌟 Ramuan Berhasil!";
-            
-            // Efek tambahan: mengganti warna tinta secara acak setelah berhasil
-            const colors = ['#ff1493', '#00ffff', '#32cd32', '#ffd700'];
-            ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
-            
-            // Opsional: Lanjut ke level berikutnya setelah beberapa detik
-            setTimeout(() => {
-                clearCanvas();
-                feedback.style.opacity = '0';
-                // Di sini nanti logika untuk mengganti soal ke 2 apel + 2 apel
-            }, 3000);
         }
     </script>
 </body>
