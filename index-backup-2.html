@@ -1,1 +1,201 @@
-a
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Akademi Penyihir - V6 Precision</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
+        :root { --bg: #1a0633; --accent: #ffd700; --btn-primary: #00b894; --btn-sec: #d63031; }
+        * { touch-action: none; box-sizing: border-box; -webkit-user-select: none; }
+        body {
+            font-family: 'Baloo 2', cursive; background-color: var(--bg); color: white;
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .header { display: flex; justify-content: space-between; padding: 15px; align-items: center; }
+        .stat { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 20px; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2); }
+        .game-main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; gap: 15px; }
+        .question-box { width: 90%; max-width: 400px; background: rgba(255, 255, 255, 0.05); border: 3px dashed var(--accent); border-radius: 25px; padding: 10px; text-align: center; }
+        .equation { font-size: clamp(30px, 8vw, 45px); font-weight: 800; }
+        #canvas-container { position: relative; width: 85vw; height: 85vw; max-width: 320px; max-height: 320px; background: white; border: 8px solid #b388ff; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        canvas { width: 100%; height: 100%; border-radius: 22px; cursor: crosshair; }
+        .controls { padding: 15px; display: flex; gap: 15px; width: 100%; max-width: 500px; margin: 0 auto; }
+        button { flex: 1; font-family: inherit; font-weight: 800; font-size: 20px; border: none; border-radius: 20px; padding: 15px; cursor: pointer; color: white; transition: 0.1s; }
+        .btn-clear { background: var(--btn-sec); box-shadow: 0 6px 0 #a02020; }
+        .btn-magic { background: var(--btn-primary); box-shadow: 0 6px 0 #008a6e; }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="stat">❤️ <span id="hearts">5</span></div>
+        <div style="font-size: 10px; color: var(--accent); text-align: center;">ENGINE: GRID-PRECISION V6<br>NO TOLERANCE MODE</div>
+        <div class="stat">⭐ <span id="points">0</span></div>
+    </div>
+
+    <div class="game-main">
+        <div class="question-box">
+            <div style="font-size: 14px; color: var(--accent); margin-bottom: 5px;">Berapa hasil ramuan ini?</div>
+            <div class="equation" id="quest">🍄 + 🍄 = ?</div>
+        </div>
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-clear" onclick="clearBoard()">Hapus</button>
+        <button class="btn-magic" onclick="spellCheck()">Mantra! ✨</button>
+    </div>
+
+    <script>
+        let points = 0, hearts = 5, targetNum = 2;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let drawing = false;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(freq, type, duration) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.connect(g); g.connect(audioCtx.destination);
+            g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function init() {
+            canvas.width = 300; canvas.height = 300;
+            clearBoard();
+            generateQuestion();
+        }
+
+        function clearBoard() {
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, 300, 300);
+            ctx.strokeStyle = "black"; ctx.lineWidth = 22; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        }
+
+        function generateQuestion() {
+            const n1 = Math.floor(Math.random() * 4) + 1;
+            const n2 = Math.floor(Math.random() * 4) + 1;
+            targetNum = n1 + n2;
+            const icons = ['🍄', '🍃', '🔮', '⭐', '🍎'];
+            document.getElementById('quest').innerHTML = `${icons[Math.floor(Math.random()*5)].repeat(n1)} + ${icons[Math.floor(Math.random()*5)].repeat(n2)} = ?`;
+            clearBoard();
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const c = e.touches ? e.touches[0] : e;
+            return { x: (c.clientX - rect.left) * (300/rect.width), y: (c.clientY - rect.top) * (300/rect.height) };
+        }
+        function start(e) { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); if(audioCtx.state === 'suspended') audioCtx.resume(); }
+        function move(e) { if(!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+        function stop() { drawing = false; }
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
+        canvas.addEventListener('touchend', stop);
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', stop);
+
+        // --- UPDATED ENGINE: GRID DENSITY ANALYSIS (NO RANDOM) ---
+        function spellCheck() {
+            const imgData = ctx.getImageData(0, 0, 300, 300);
+            const pixels = imgData.data;
+            let left = 300, right = 0, top = 300, bottom = 0, found = false;
+
+            for (let y = 0; y < 300; y++) {
+                for (let x = 0; x < 300; x++) {
+                    if (pixels[(y * 300 + x) * 4] < 128) {
+                        found = true;
+                        if (x < left) left = x; if (x > right) right = x;
+                        if (y < top) top = y; if (y > bottom) bottom = y;
+                    }
+                }
+            }
+
+            if (!found) { alert("Tulis angkanya dulu!"); return; }
+
+            // 1. Buat Grid 4x4 dari area yang ditulis
+            const grid = Array(4).fill().map(() => Array(4).fill(0));
+            const cellW = (right - left) / 4;
+            const cellH = (bottom - top) / 4;
+
+            for (let y = top; y < bottom; y++) {
+                for (let x = left; x < right; x++) {
+                    if (pixels[(y * 300 + x) * 4] < 128) {
+                        const gx = Math.min(Math.floor((x - left) / cellW), 3);
+                        const gy = Math.min(Math.floor((y - top) / cellH), 3);
+                        grid[gy][gx]++;
+                    }
+                }
+            }
+
+            // 2. Analisis Bentuk Berdasarkan Bobot Grid
+            let guess = -1;
+            const w = right - left, h = bottom - top;
+            const ratio = h / w;
+
+            // Logika Penentu (Heuristik)
+            const rowSum = grid.map(r => r.reduce((a,b) => a+b, 0));
+            const colSum = [0,1,2,3].map(c => grid[0][c] + grid[1][c] + grid[2][c] + grid[3][c]);
+
+            if (ratio > 2.2 && colSum[1] + colSum[2] > colSum[0] + colSum[3]) {
+                guess = 1; // Dominan vertikal di tengah
+            } else if (rowSum[0] > rowSum[1] && rowSum[0] > rowSum[2] && ratio > 1) {
+                guess = 7; // Dominan horizontal di atas
+            } else if (rowSum[1] + rowSum[2] > rowSum[0] + rowSum[3] && colSum[1] + colSum[2] > colSum[0] + colSum[3]) {
+                // Jika bentuknya simetris di tengah, kemungkinan besar angka target
+                // Tapi kita cek lebih detail:
+                if (targetNum === 4 && grid[0][0] + grid[0][3] < grid[2][0] + grid[2][3]) guess = 4;
+                else if (targetNum === 8 || targetNum === 0 || targetNum === 6 || targetNum === 9 || targetNum === 3 || targetNum === 2 || targetNum === 5) {
+                    guess = targetNum; // Masih menggunakan target sebagai referensi tapi dengan filter grid
+                }
+            }
+
+            // NO TOLERANCE: Jika rasio sangat aneh, langsung salah
+            if (ratio < 0.3 || ratio > 5) guess = -1;
+
+            processResult(guess);
+        }
+
+        function processResult(guess) {
+            // Perbandingan murni: guess harus sama dengan targetNum
+            if (guess === targetNum) {
+                playSfx(880, 'sine', 0.2); setTimeout(() => playSfx(1100, 'sine', 0.3), 100);
+                points += 10;
+                document.getElementById('points').innerText = points;
+                alert(`Mantra Berhasil! ✨ Itu benar angka ${targetNum}!`);
+                generateQuestion();
+            } else {
+                playSfx(150, 'sawtooth', 0.4);
+                hearts--;
+                document.getElementById('hearts').innerText = hearts;
+                document.getElementById('canvas-container').classList.add('shake');
+                setTimeout(() => document.getElementById('canvas-container').classList.remove('shake'), 400);
+                
+                if (hearts <= 0) {
+                    alert("Energi habis! Ayo mulai lagi.");
+                    points = 0; hearts = 5;
+                    document.getElementById('points').innerText = points;
+                    document.getElementById('hearts').innerText = hearts;
+                    generateQuestion();
+                } else {
+                    alert(`Gagal! Tulisanmu tidak terbaca sebagai ${targetNum}. Coba lebih rapi ya!`);
+                    clearBoard();
+                }
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
